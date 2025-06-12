@@ -1,0 +1,28 @@
+name: Build & Deploy (static)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./public          # <<< uploads the tiny site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
+        # only publish when the push actually lands on main
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
