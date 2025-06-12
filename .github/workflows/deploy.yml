@@ -15,19 +15,14 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
 
-      # upload everything in public/ as the Pages artifact
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: ./public
+          path: ./public          # <<< uploads the tiny site
 
       - id: deployment
         uses: actions/deploy-pages@v4
-        # deploy only when the push actually hits main
+        # only publish when the push actually lands on main
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-        env:
-          # GitHub sets and reads these automatically; id kept for clarity
-          name: github-pages
