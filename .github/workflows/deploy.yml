@@ -1,47 +1,33 @@
-name: Build & Deploy
+name: Build & Deploy (static)
 
 on:
   push:
-    branches: [main]        # run on direct pushes to main
+    branches: [main]
   pull_request:
-    branches: [main]        # run on PRs that target main
-  workflow_dispatch:        # allow manual trigger from UI
+    branches: [main]
+  workflow_dispatch:
 
-# minimum perms for GitHub Pages
 permissions:
   contents: read
   pages: write
   id-token: write
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22          # match your local 22.x
-
-      - run: npm install
-      - run: npm run build          # adjust if you use `next build && next export`
-
-      # Upload the static site as an artifact for the deploy job
+      # upload everything in public/ as the Pages artifact
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: ./out               # ← change if your build output differs
+          path: ./public
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    # Only deploy when the run is coming from the main branch (skip PR test runs)
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
-    steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+        # deploy only when the push actually hits main
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        env:
+          # GitHub sets and reads these automatically; id kept for clarity
+          name: github-pages
