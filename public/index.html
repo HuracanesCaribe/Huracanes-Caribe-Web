@@ -1,9 +1,79 @@
 <!doctype html>
-<meta charset="utf-8">
-<title>Huracanes Caribe — coming soon</title>
-<style>
-  body {font-family: system-ui, sans-serif; display:flex; height:100vh;
-        justify-content:center; align-items:center; margin:0; background:#f6f8fa;}
-  h1  {font-size:2rem; color:#222;}
-</style>
-<h1>🌪️ Huracanes Caribe — site under construction 🌩️</h1>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Huracanes Caribe – Precise Hurricane Information for the Caribbean</title>
+
+  <!-- Open Graph for sharing -->
+  <meta property="og:title" content="Huracanes Caribe" />
+  <meta property="og:description" content="City-level risk, realtime maps and a regional community—before, during & after the storm." />
+  <meta property="og:image" content="https://huracanescaribe.github.io/assets/og-image.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- ===== Header / Hero ===== -->
+  <header class="hero">
+    <div class="container">
+      <h1 class="logo">🌪️ Huracanes <strong>Caribe</strong></h1>
+      <p class="tagline">
+        Precise, city-level hurricane forecasts, impact maps &amp; a vibrant Caribbean community.
+      </p>
+      <a href="#join" class="btn-primary">Join the WhatsApp Community</a>
+    </div>
+    <!-- decorative background waves -->
+    <svg class="hero-wave" viewBox="0 0 1440 120" preserveAspectRatio="none">
+      <path d="M0,120 C480,0 960,0 1440,120 L1440,0 L0,0 Z"></path>
+    </svg>
+  </header>
+
+  <!-- ===== About Section ===== -->
+  <section id="about" class="about container">
+    <h2>Why Huracanes Caribe?</h2>
+    <p>
+      We translate raw meteorological data into <strong>actionable, local forecasts</strong>—wind,
+      rainfall, storm-surge &amp; tornado risk—so you can protect your family and community.
+    </p>
+
+    <div class="features">
+      <article>
+        <h3>🎯 Hyper-local Data</h3>
+        <p>City &amp; county-level probabilities from NOAA, ECMWF &amp; custom models.</p>
+      </article>
+      <article>
+        <h3>🗺️ Interactive Maps</h3>
+        <p>Clean, mobile-first maps built with Python &amp; Pycairo overlays.</p>
+      </article>
+      <article>
+        <h3>🤝 Community Network</h3>
+        <p>WhatsApp groups across the Caribbean sharing real-time ground reports.</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- ===== Call-to-Action ===== -->
+  <section class="cta">
+    <h2>Be ready before the next storm.</h2>
+    <a id="join" href="https://chat.whatsapp.com/your-invite-link" class="btn-secondary">
+      👉 Join our WhatsApp Community
+    </a>
+  </section>
+
+  <!-- ===== Footer ===== -->
+  <footer>
+    <div class="container footer-grid">
+      <div>
+        <h3>Huracanes Caribe</h3>
+        <p>&copy; 2025 HuracanesCaribe. All rights reserved.</p>
+      </div>
+      <nav>
+        <a href="#about">About</a>
+        <a href="mailto:hola@huracanescaribe.com">Contact</a>
+        <a href="#">Privacy&nbsp;Policy</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>
