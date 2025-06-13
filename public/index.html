@@ -3,77 +3,158 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Huracanes Caribe – Precise Hurricane Information for the Caribbean</title>
+  <title>Huracanes Caribe | Precision Hurricane Intelligence</title>
 
-  <!-- Open Graph for sharing -->
-  <meta property="og:title" content="Huracanes Caribe" />
-  <meta property="og:description" content="City-level risk, realtime maps and a regional community—before, during & after the storm." />
-  <meta property="og:image" content="https://huracanescaribe.github.io/assets/og-image.png" />
-  <meta name="twitter:card" content="summary_large_image" />
+  <!-- Favicon -->
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+
+  <!-- Google Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap">
 
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- ===== Header / Hero ===== -->
-  <header class="hero">
-    <div class="container">
-      <h1 class="logo">🌪️ Huracanes <strong>Caribe</strong></h1>
-      <p class="tagline">
-        Precise, city-level hurricane forecasts, impact maps &amp; a vibrant Caribbean community.
-      </p>
-      <a href="#join" class="btn-primary">Join the WhatsApp Community</a>
+
+  <!-- ╔═════════ Nav ═════════╗ -->
+  <header class="nav">
+    <div class="container nav-flex">
+      <a href="#" class="brand"><img src="assets/logo.svg" alt=""> Huracanes <b>Caribe</b></a>
+
+      <nav id="menu">
+        <a href="#about">Por qué</a>
+        <a href="#features">Funciones</a>
+        <a href="#community">Comunidad</a>
+        <a href="#contact">Contacto</a>
+      </nav>
+
+      <!-- mobile burger -->
+      <button id="burger" aria-label="Abrir menú"></button>
     </div>
-    <!-- decorative background waves -->
-    <svg class="hero-wave" viewBox="0 0 1440 120" preserveAspectRatio="none">
-      <path d="M0,120 C480,0 960,0 1440,120 L1440,0 L0,0 Z"></path>
-    </svg>
   </header>
 
-  <!-- ===== About Section ===== -->
-  <section id="about" class="about container">
-    <h2>Why Huracanes Caribe?</h2>
-    <p>
-      We translate raw meteorological data into <strong>actionable, local forecasts</strong>—wind,
-      rainfall, storm-surge &amp; tornado risk—so you can protect your family and community.
-    </p>
+  <!-- ╔═════════ Hero ═════════╗ -->
+  <section class="hero">
+    <div class="container">
+      <h1 class="hero__title">Pronósticos <span>hiper-locales</span><br>para todo el Caribe</h1>
+      <p class="hero__subtitle">
+        Mapas de riesgo, alertas en tiempo real y una red de voluntarios para
+        prepararte antes, durante y después del huracán.
+      </p>
 
-    <div class="features">
+      <a href="https://chat.whatsapp.com/your-invite-link"
+         class="btn btn--accent">Únete a la Comunidad →</a>
+    </div>
+    <svg class="separator" viewBox="0 0 1440 110"><path d="M0,110 C480,0 960,0 1440,110 V0 H0 Z"></path></svg>
+  </section>
+
+  <!-- ╔═════════ About ═════════╗ -->
+  <section id="about" class="about container">
+    <h2>¿Qué nos hace diferentes?</h2>
+    <p class="about__blurb">
+      Fusionamos datos de <strong>NOAA</strong>, <strong>ECMWF</strong> y
+      modelos propios para ofrecer probabilidades ciudad-a-ciudad:
+      viento, lluvia, tornado y marejada. Todo en un solo panel interactivo.
+    </p>
+  </section>
+
+  <!-- ╔═════════ Features grid ═════════╗ -->
+  <section id="features" class="features">
+    <div class="container grid">
       <article>
-        <h3>🎯 Hyper-local Data</h3>
-        <p>City &amp; county-level probabilities from NOAA, ECMWF &amp; custom models.</p>
+        <img src="assets/icon-map.svg" alt="">
+        <h3>Mapas Dinámicos</h3>
+        <p>Capas interactivas creadas con Python + Pycairo. Pan, zoom, compartir.</p>
       </article>
       <article>
-        <h3>🗺️ Interactive Maps</h3>
-        <p>Clean, mobile-first maps built with Python &amp; Pycairo overlays.</p>
+        <img src="assets/icon-bell.svg" alt="">
+        <h3>Alertas Proactivas</h3>
+        <p>Notificaciones push y WhatsApp cuando tu zona cruza umbrales de riesgo.</p>
       </article>
       <article>
-        <h3>🤝 Community Network</h3>
-        <p>WhatsApp groups across the Caribbean sharing real-time ground reports.</p>
+        <img src="assets/icon-community.svg" alt="">
+        <h3>Inteligencia Colectiva</h3>
+        <p>Usuarios reportan cortes, inundaciones y daños para afinar el modelo.</p>
       </article>
     </div>
   </section>
 
-  <!-- ===== Call-to-Action ===== -->
-  <section class="cta">
-    <h2>Be ready before the next storm.</h2>
-    <a id="join" href="https://chat.whatsapp.com/your-invite-link" class="btn-secondary">
-      👉 Join our WhatsApp Community
-    </a>
+  <!-- ╔═════════ Testimonials (CSS slider) ═════════╗ -->
+  <section class="testimonials">
+    <div class="container">
+      <h2>Lo que dice la comunidad</h2>
+
+      <div class="slider">
+        <input type="radio" name="t" id="t-1" checked>
+        <input type="radio" name="t" id="t-2">
+        <input type="radio" name="t" id="t-3">
+
+        <div class="slides">
+          <figure>
+            <blockquote>“Las alertas llegaron horas antes que las
+            oficiales—pude asegurar mi negocio a tiempo.”</blockquote>
+            <figcaption>— Elisa R., San Juan 🇵🇷</figcaption>
+          </figure>
+          <figure>
+            <blockquote>“Los mapas de Huracanes Caribe fueron
+            esenciales para planear rutas de evacuación en mi
+            municipio.”</blockquote>
+            <figcaption>— Juan M., Cancún 🇲🇽</figcaption>
+          </figure>
+          <figure>
+            <blockquote>“Me uní al grupo de WhatsApp y encontré ayuda
+            para mi familia tras el impacto.”</blockquote>
+            <figcaption>— Carla S., Kingston 🇯🇲</figcaption>
+          </figure>
+        </div>
+
+        <div class="dots">
+          <label for="t-1"></label>
+          <label for="t-2"></label>
+          <label for="t-3"></label>
+        </div>
+      </div>
+    </div>
   </section>
 
-  <!-- ===== Footer ===== -->
+  <!-- ╔═════════ CTA / Newsletter ═════════╗ -->
+  <section class="cta">
+    <h2>Mantente un paso adelante del próximo ciclón.</h2>
+    <form class="cta__form" action="https://example.com/subscribe" method="post">
+      <input type="email" name="email" placeholder="Tu correo electrónico" required>
+      <button class="btn">Suscribirse</button>
+    </form>
+  </section>
+
+  <!-- ╔═════════ Contact ═════════╗ -->
+  <section id="contact" class="contact container">
+    <h2>Contacto directo</h2>
+    <form action="mailto:hola@huracanescaribe.com" method="post" enctype="text/plain">
+      <input required name="name"  placeholder="Nombre">
+      <input required name="email" type="email" placeholder="Email">
+      <textarea required name="msg"  rows="4" placeholder="¿En qué podemos ayudarte?"></textarea>
+      <button class="btn btn--accent">Enviar mensaje</button>
+    </form>
+  </section>
+
+  <!-- ╔═════════ Footer ═════════╗ -->
   <footer>
-    <div class="container footer-grid">
-      <div>
-        <h3>Huracanes Caribe</h3>
-        <p>&copy; 2025 HuracanesCaribe. All rights reserved.</p>
-      </div>
+    <div class="container footer-flex">
+      <div>&copy; 2025 Huracanes Caribe</div>
       <nav>
-        <a href="#about">About</a>
-        <a href="mailto:hola@huracanescaribe.com">Contact</a>
-        <a href="#">Privacy&nbsp;Policy</a>
+        <a href="#">Términos</a>
+        <a href="#">Privacidad</a>
+        <a href="#top">Arriba ↑</a>
       </nav>
     </div>
   </footer>
+
+  <!-- Mobile nav toggle -->
+  <script>
+    const burger = document.getElementById('burger');
+    const menu   = document.getElementById('menu');
+    burger.onclick = () => menu.classList.toggle('open');
+  </script>
 </body>
 </html>
