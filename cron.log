@@ -8062,3 +8062,24 @@ Using PAGE_ACCESS_TOKEN: EAAR78aP6Ln8BOZCBrRe
 ⬇️  Downloading: https://www.nhc.noaa.gov/xgtwo/gtwo_shapefiles.zip
 ✅ Extracted shapefiles to data
 ❌ Failed for EP: [Errno 2] No such file or directory: 'data/two_latest.zip'
+Using PAGE_ACCESS_TOKEN: EAAR78aP6Ln8BOZCBrRe
+⬇️  Downloading: https://www.nhc.noaa.gov/xgtwo/gtwo_shapefiles.zip
+✅ Extracted shapefiles to data
+❌ Failed for AL: [Errno 2] No such file or directory: 'data/two_latest.zip'
+⬇️  Downloading: https://www.nhc.noaa.gov/xgtwo/gtwo_shapefiles.zip
+✅ Extracted shapefiles to data
+❌ Failed for EP: [Errno 2] No such file or directory: 'data/two_latest.zip'
+Using PAGE_ACCESS_TOKEN: EAAR78aP6Ln8BOZCBrRe
+⬇️  Downloading: https://www.nhc.noaa.gov/xgtwo/gtwo_shapefiles.zip
+✅ Extracted shapefiles to data
+❌ Failed for AL: [Errno 2] No such file or directory: 'data/two_latest.zip'
+⬇️  Downloading: https://www.nhc.noaa.gov/xgtwo/gtwo_shapefiles.zip
+✅ Extracted shapefiles to data
+❌ Failed for EP: [Errno 2] No such file or directory: 'data/two_latest.zip'
+Using PAGE_ACCESS_TOKEN: EAAR78aP6Ln8BOZCBrRe
+⬇️  Downloading: https://www.nhc.noaa.gov/xgtwo/gtwo_shapefiles.zip
+✅ Extracted shapefiles to data
+❌ Failed for AL: [Errno 2] No such file or directory: 'data/two_latest.zip'
+⬇️  Downloading: https://www.nhc.noaa.gov/xgtwo/gtwo_shapefiles.zip
+✅ Extracted shapefiles to data
+❌ Failed for EP: [Errno 2] No such file or directory: 'data/two_latest.zip'
