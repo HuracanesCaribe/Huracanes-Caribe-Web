@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Huracanes Caribe | GTWO Plots</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .plots { display: grid; gap: 2rem; }
+    .plots img { width: 100%; height: auto; border-radius: var(--radius); box-shadow: var(--shadow); }
+  </style>
+</head>
+<body>
+  <header class="nav">
+    <div class="container nav-flex">
+      <a href="index.html" class="brand">Huracanes <b>Caribe</b></a>
+    </div>
+  </header>
+  <main class="container" style="padding-top:2rem">
+    <h1>Últimos mapas generados</h1>
+    <p>Puedes usar el script <code>web.py</code> para servir estas imágenes.</p>
+    <div class="plots">
+    </div>
+  </main>
+  <script>
+    fetch('/list.json').then(r=>r.json()).then(list=>{
+      const div=document.querySelector('.plots');
+      list.forEach(name=>{
+        const img=document.createElement('img');
+        img.src='/plots/'+name;
+        img.alt=name;
+        div.appendChild(img);
+      });
+    });
+  </script>
+</body>
+</html>
