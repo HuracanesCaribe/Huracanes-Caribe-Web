@@ -16,3 +16,4 @@ cairocffi>=1.5
 
 # Timezone support (for Python < 3.9 use backports.zoneinfo)
 # Python 3.9+ includes zoneinfo in stdlib
+flask>=2.3

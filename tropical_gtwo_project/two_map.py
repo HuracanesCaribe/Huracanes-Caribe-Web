@@ -54,18 +54,18 @@ def setup_basemap(ax, basin):
     xticks = neat(xmin, xmax, 5)[1:-1]
     yticks = neat(ymin, ymax, 5)[1:-1]
 
-    # longitude labels evenly spaced in axes coords
-    n_xticks = len(xticks)
-    for i, lon in enumerate(xticks):
+    # longitude labels positioned at their actual locations
+    x_range = xmax - xmin if xmax != xmin else 1
+    for lon in xticks:
         hemi = "W" if lon < 0 else ("E" if lon > 0 else "")
-        pos_x = i / (n_xticks - 1)
+        pos_x = (lon - xmin) / x_range
         halo(pos_x, 1.01, f"{abs(lon):.0f}°{hemi}", ha="center", va="bottom")
 
-    # latitude labels evenly spaced in axes coords
-    n_yticks = len(yticks)
-    for i, lat in enumerate(yticks):
+    # latitude labels positioned at their actual locations
+    y_range = ymax - ymin if ymax != ymin else 1
+    for lat in yticks:
         hemi = "S" if lat < 0 else ("N" if lat > 0 else "")
-        pos_y = i / (n_yticks - 1)
+        pos_y = (lat - ymin) / y_range
         halo(1.02, pos_y, f"{abs(lat):.0f}°{hemi}", ha="left", va="center")
 
 
