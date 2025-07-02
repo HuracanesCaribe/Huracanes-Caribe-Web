@@ -54,37 +54,39 @@ def parse_issue_time_from_gdf(gdf: gpd.GeoDataFrame, fallback_shp: str) -> datet
     return datetime.datetime.now(datetime.timezone.utc)
 
 
-def get_two_gdfs(basin_tag: str, cache="data/two_latest.zip"):
+def get_two_gdfs(basin_tag: str, data_dir="data") -> tuple[gpd.GeoDataFrame, datetime.datetime]:
     import geopandas as gpd
-    import zipfile
-    import re
-    import datetime
     import pathlib
+    import datetime
 
-    zip_path = pathlib.Path(cache)
-    with zipfile.ZipFile(zip_path) as zf:
-        areas = [n for n in zf.namelist()
-                 if n.lower().endswith(".shp") and "areas" in n.lower()]
-        if not areas:
-            raise RuntimeError(f"No *areas*.shp found in {zip_path}")
-        shp = areas[0]
-        gdf = gpd.read_file(f"zip://{zip_path}!{shp}")
+    basin_tag = basin_tag.upper()
+    data_path = pathlib.Path(data_dir)
+    
+    # pick the latest *areas* shapefile
+    shp_files = sorted(data_path.glob("gtwo_areas_*.shp"), reverse=True)
+    if not shp_files:
+        raise FileNotFoundError("No gtwo_areas_*.shp found in data directory")
 
-    # parse issue time (fallback to now if missing)
-    issue_dt = datetime.datetime.now(datetime.timezone.utc)
+    shp = shp_files[0]
+    gdf = gpd.read_file(shp)
 
     # filter by basin
-    gdf = gdf[gdf["BASIN"].str.contains(basin_tag, case=False)].copy()
+    gdf = gdf[gdf["BASIN"].str.contains(basin_tag, case=False, na=False)].copy()
 
-    # unify 2-day and 7-day probabilities in one GeoDataFrame
-    # (no need to separate anymore)
+    # fallback issue date to file timestamp
+    issue_dt = datetime.datetime.utcfromtimestamp(shp.stat().st_mtime).replace(tzinfo=datetime.timezone.utc)
+
     gdf["PROB2DAY"] = gdf["RISK2DAY"].str.title()
     gdf["PROB7DAY"] = gdf["RISK7DAY"].str.title()
 
-    # keep only reasonable probabilities
-    gdf = gdf[gdf["PROB2DAY"].isin(["Low", "Medium", "High"]) | gdf["PROB7DAY"].isin(["Low", "Medium", "High"])]
+    gdf = gdf[
+        gdf["PROB2DAY"].isin(["Low", "Medium", "High"]) | 
+        gdf["PROB7DAY"].isin(["Low", "Medium", "High"])
+    ]
 
     return gdf, issue_dt
+
+
 
 
 def get_points(basin_tag: str) -> gpd.GeoDataFrame:
