@@ -1,0 +1,20 @@
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.pyd
+*.so
+*.egg-info/
+.env/
+venv/
+
+# Logs
+*.log
+
+# Generated data and output
+data/
+output/
+tropical_gtwo_project/data/
+tropical_gtwo_project/output/
+
+# OS / editor files
+.DS_Store
