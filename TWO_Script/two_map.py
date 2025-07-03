@@ -59,14 +59,14 @@ def setup_basemap(ax, basin):
     for lon in xticks:
         hemi = "W" if lon < 0 else ("E" if lon > 0 else "")
         pos_x = (lon - xmin) / x_range
-        halo(pos_x, 1.01, f"{abs(lon):.0f}°{hemi}", ha="center", va="bottom")
+        halo(pos_x, 0.995, f"{abs(lon):.0f}°{hemi}", ha="center", va="top")
 
     # latitude labels positioned at their actual locations
     y_range = ymax - ymin if ymax != ymin else 1
     for lat in yticks:
         hemi = "S" if lat < 0 else ("N" if lat > 0 else "")
         pos_y = (lat - ymin) / y_range
-        halo(1.02, pos_y, f"{abs(lat):.0f}°{hemi}", ha="left", va="center")
+        halo(0.995, pos_y, f"{abs(lat):.0f}°{hemi}", ha="right", va="center")
 
 
 def draw_two_polygons(ax, two):

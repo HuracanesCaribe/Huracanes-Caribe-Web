@@ -32,17 +32,27 @@ def build_outlook(basin: str, label: str, prefix: str,
     draw_legend(ax, basin, issue_dt)
     draw_timestamp(ax, basin, issue_dt)
 
-    fig.subplots_adjust(left=0.005, right=0.995, bottom=0.02, top=0.90)
+    fig.subplots_adjust(left=0.005, right=0.995, bottom=0.02, top=0.92)
 
     # --- keep the map from autoscaling when we add polygons -------------
     ax.set_extent(DEFAULT_EXTENT[basin], crs=ccrs.PlateCarree())
     ax.set_autoscale_on(False)        # turn autoscaling off
     ax.apply_aspect()                 # re-align ticks / gridlines
     # -------------------------------------------------------------------
-    fig.suptitle(f"Combined Graphical Tropical Weather Outlook for {label}",
-                 fontsize=20, weight="bold", y=0.955)
-    fig.text(0.5, 0.905, "Creado por Huracanes Caribe - www.huracanescaribe.com -",
-             ha="center", va="top", fontsize=18)
+    fig.suptitle(
+        f"Combined Graphical Tropical Weather Outlook for {label}",
+        fontsize=20,
+        weight="bold",
+        y=0.955,
+    )
+    fig.text(
+        0.5,
+        0.93,
+        "Creado por Huracanes Caribe - www.huracanescaribe.com -",
+        ha="center",
+        va="top",
+        fontsize=18,
+    )
 
     # Footer
     stamp = issue_dt.strftime("%d %b %Y %H:%M UTC")
