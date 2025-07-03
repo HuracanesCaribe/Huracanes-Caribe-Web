@@ -6,12 +6,10 @@ import matplotlib.patheffects as pe
 import matplotlib.ticker as mticker
 from matplotlib.patches import Patch
 from matplotlib.lines import Line2D
-from matplotlib.offsetbox import OffsetImage, AnnotationBbox
-from PIL import Image
+
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
-import cairocffi as cairo
 from shapely.ops import nearest_points
 import shapely
 
@@ -109,43 +107,30 @@ def draw_two_polygons(ax, two):
 
 
 
-def cairo_arrow_surface(length_px=140, shaft_px=20,
-                        head_len_px=50, head_width_px=60,
-                        rgb=(1, 1, 0)):
-    w = length_px + head_len_px
-    h = max(head_width_px, shaft_px) + 4
-    surf = cairo.ImageSurface(cairo.FORMAT_ARGB32, w, h)
-    ctx = cairo.Context(surf)
-    ctx.set_source_rgba(0, 0, 0, 0)
-    ctx.paint()
-    ctx.set_source_rgb(*rgb)
-    ctx.rectangle(0, (h - shaft_px) / 2, length_px, shaft_px)
-    ctx.fill()
-    ctx.move_to(length_px, (h - head_width_px) / 2)
-    ctx.line_to(w, h / 2)
-    ctx.line_to(length_px, (h + head_width_px) / 2)
-    ctx.close_path()
-    ctx.fill()
-    ctx.set_line_width(3)
-    ctx.set_source_rgb(0, 0, 0)
-    ctx.stroke()
-    return surf
+def draw_cairo_arrow(ax, x0, y0, x1, y1, rgb):
+    """Draw a movement arrow from (x0, y0) toward (x1, y1)."""
+    arrowprops = dict(
+        arrowstyle="-|>",
+        color=rgb,
+        linewidth=3,
+        mutation_scale=15,
+        shrinkA=0,
+        shrinkB=0,
+        path_effects=[
+            pe.Stroke(linewidth=5, foreground="black"),
+            pe.Normal(),
+        ],
+    )
 
-
-def draw_cairo_arrow(ax, x0, y0, x1, y1, rgb, zoom=0.28):
-    mid_lon, mid_lat = (x0 + x1) / 2, (y0 + y1) / 2
-    bearing = -np.degrees(np.arctan2(y1 - y0, x1 - x0))
-    surf = cairo_arrow_surface(rgb=rgb)
-    im = Image.frombuffer("RGBA", (surf.get_width(), surf.get_height()),
-                          surf.get_data(), "raw", "BGRA", 0, 1)
-    import numpy as np
-    arr = np.array(im)
-    arr = np.array(Image.fromarray(arr).rotate(bearing, expand=True))
-    imagebox = OffsetImage(arr, zoom=zoom)
-    ab = AnnotationBbox(imagebox, (mid_lon, mid_lat), frameon=False,
-                        xycoords=ccrs.PlateCarree()._as_mpl_transform(ax),
-                        boxcoords="offset points", zorder=8)
-    ax.add_artist(ab)
+    ax.annotate(
+        "",
+        xy=(x1, y1),
+        xytext=(x0, y0),
+        xycoords=ccrs.PlateCarree(),
+        textcoords=ccrs.PlateCarree(),
+        arrowprops=arrowprops,
+        zorder=8,
+    )
 
 
 def draw_points_and_arrows(ax, pts, lines, two):
