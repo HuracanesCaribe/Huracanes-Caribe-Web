@@ -114,7 +114,7 @@ def draw_cairo_arrow(ax, x0, y0, x1, y1, rgb):
         color=rgb,
         linewidth=3,
         mutation_scale=15,
-        shrinkA=0,
+         shrinkA=0,
         shrinkB=0,
         path_effects=[
             pe.Stroke(linewidth=5, foreground="black"),
@@ -133,22 +133,28 @@ def draw_cairo_arrow(ax, x0, y0, x1, y1, rgb):
     )
 
 
+
+
 def draw_points_and_arrows(ax, pts, lines, two):
+
     for _, row in lines.iterrows():
         geom = row.geometry
         if geom.geom_type != "LineString" or len(geom.coords) < 2:
             continue
         x0, y0 = geom.coords[-1]
-        if not two.empty:
-            # use nearest point on the first 7-day polygon as arrow target
-            polygon = two.geometry.iloc[0]
-            nearest = nearest_points(polygon.boundary, shapely.Point(x0, y0))[0]
+        if boundary and not boundary.is_empty:
+            nearest = nearest_points(boundary, shapely.Point(x0, y0))[0]
             x1, y1 = nearest.x, nearest.y
         else:
             x1, y1 = x0, y0
+
         risk = (row.get("RISK2DAY") or "").title()
-        rgb = {"Low": (1, 1, 0), "Medium": (1, 0.64, 0), "High": (1, 0, 0)}.get(risk, (1, 1, 1))
-        draw_cairo_arrow(ax, x0, y0, x1, y1, rgb)
+        color = {
+            "Low": COL["two2_low"],
+            "Medium": COL["two2_med"],
+            "High": COL["two2_high"],
+        }.get(risk, "white")
+        draw_cairo_arrow(ax, x0, y0, x1, y1, color, size=arrow_scale)
 
     for _, row in pts.iterrows():
         lon, lat = row.geometry.x, row.geometry.y
