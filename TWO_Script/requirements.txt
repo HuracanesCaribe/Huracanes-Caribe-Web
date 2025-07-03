@@ -3,16 +3,12 @@
 # Core libraries
 matplotlib>=3.7
 numpy>=1.23
-pillow>=9.5
 requests>=2.31
 
 # Geospatial stack
 geopandas>=0.13
 shapely>=2.0
 cartopy>=0.21
-
-# Cairo-based arrow rendering
-cairocffi>=1.5
 
 # Timezone support (for Python < 3.9 use backports.zoneinfo)
 # Python 3.9+ includes zoneinfo in stdlib
