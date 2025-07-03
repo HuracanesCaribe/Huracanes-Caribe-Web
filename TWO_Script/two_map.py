@@ -33,7 +33,7 @@ def setup_basemap(ax, basin):
     gl.yformatter = LatitudeFormatter()
 
     xmin, xmax, ymin, ymax = ax.get_extent(crs=ccrs.PlateCarree())
-
+        
     def halo(x, y, txt, ha="center", va="center"):
         ax.text(
             x, y, txt,
@@ -103,7 +103,7 @@ def draw_two_polygons(ax, two):
                     facecolor="none",
                     edgecolor=cmap7[level],
                     hatch="////",
-                    linewidth=1.5,
+                    linewidth=3,
                     zorder=7
                 )
 
