@@ -107,14 +107,14 @@ def draw_two_polygons(ax, two):
 
 
 
-def draw_cairo_arrow(ax, x0, y0, x1, y1, color, size=15):
+def draw_cairo_arrow(ax, x0, y0, x1, y1, rgb):
     """Draw a movement arrow from (x0, y0) toward (x1, y1)."""
     arrowprops = dict(
         arrowstyle="-|>",
-        color=color,
+        color=rgb,
         linewidth=3,
-        mutation_scale=size,
-        shrinkA=0,
+        mutation_scale=15,
+         shrinkA=0,
         shrinkB=0,
         path_effects=[
             pe.Stroke(linewidth=5, foreground="black"),
@@ -133,8 +133,9 @@ def draw_cairo_arrow(ax, x0, y0, x1, y1, color, size=15):
     )
 
 
-def draw_points_and_arrows(ax, pts, lines, two, arrow_scale=15):
-    boundary = two.geometry.unary_union.boundary if not two.empty else None
+
+
+def draw_points_and_arrows(ax, pts, lines, two):
 
     for _, row in lines.iterrows():
         geom = row.geometry
