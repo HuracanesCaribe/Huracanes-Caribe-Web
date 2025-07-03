@@ -35,8 +35,10 @@ FIGSIZE = (14, 11)
 DPI     = 300
 
 # ——— FILESYSTEM PATHS ——————————————————————————————————————
-BASE    = pathlib.Path(__file__).resolve().parent
-OUTDIR  = BASE / "output"
+from pathlib import Path
+
+BASE = Path(__file__).resolve().parent.parent   # one level up to project root
+OUTDIR = BASE / "output"
 DATADIR = BASE / "data"
 
 OUTDIR.mkdir(exist_ok=True)
