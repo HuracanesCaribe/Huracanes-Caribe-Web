@@ -6,12 +6,10 @@ import matplotlib.patheffects as pe
 import matplotlib.ticker as mticker
 from matplotlib.patches import Patch
 from matplotlib.lines import Line2D
-from matplotlib.offsetbox import OffsetImage, AnnotationBbox
-from PIL import Image
+
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
-import cairocffi as cairo
 from shapely.ops import nearest_points
 import shapely
 
@@ -109,61 +107,53 @@ def draw_two_polygons(ax, two):
 
 
 
-def cairo_arrow_surface(length_px=140, shaft_px=20,
-                        head_len_px=50, head_width_px=60,
-                        rgb=(1, 1, 0)):
-    w = length_px + head_len_px
-    h = max(head_width_px, shaft_px) + 4
-    surf = cairo.ImageSurface(cairo.FORMAT_ARGB32, w, h)
-    ctx = cairo.Context(surf)
-    ctx.set_source_rgba(0, 0, 0, 0)
-    ctx.paint()
-    ctx.set_source_rgb(*rgb)
-    ctx.rectangle(0, (h - shaft_px) / 2, length_px, shaft_px)
-    ctx.fill()
-    ctx.move_to(length_px, (h - head_width_px) / 2)
-    ctx.line_to(w, h / 2)
-    ctx.line_to(length_px, (h + head_width_px) / 2)
-    ctx.close_path()
-    ctx.fill()
-    ctx.set_line_width(3)
-    ctx.set_source_rgb(0, 0, 0)
-    ctx.stroke()
-    return surf
+def draw_cairo_arrow(ax, x0, y0, x1, y1, color, size=15):
+    """Draw a movement arrow from (x0, y0) toward (x1, y1)."""
+    arrowprops = dict(
+        arrowstyle="-|>",
+        color=color,
+        linewidth=3,
+        mutation_scale=size,
+        shrinkA=0,
+        shrinkB=0,
+        path_effects=[
+            pe.Stroke(linewidth=5, foreground="black"),
+            pe.Normal(),
+        ],
+    )
+
+    ax.annotate(
+        "",
+        xy=(x1, y1),
+        xytext=(x0, y0),
+        xycoords=ccrs.PlateCarree(),
+        textcoords=ccrs.PlateCarree(),
+        arrowprops=arrowprops,
+        zorder=8,
+    )
 
 
-def draw_cairo_arrow(ax, x0, y0, x1, y1, rgb, zoom=0.28):
-    mid_lon, mid_lat = (x0 + x1) / 2, (y0 + y1) / 2
-    bearing = -np.degrees(np.arctan2(y1 - y0, x1 - x0))
-    surf = cairo_arrow_surface(rgb=rgb)
-    im = Image.frombuffer("RGBA", (surf.get_width(), surf.get_height()),
-                          surf.get_data(), "raw", "BGRA", 0, 1)
-    import numpy as np
-    arr = np.array(im)
-    arr = np.array(Image.fromarray(arr).rotate(bearing, expand=True))
-    imagebox = OffsetImage(arr, zoom=zoom)
-    ab = AnnotationBbox(imagebox, (mid_lon, mid_lat), frameon=False,
-                        xycoords=ccrs.PlateCarree()._as_mpl_transform(ax),
-                        boxcoords="offset points", zorder=8)
-    ax.add_artist(ab)
+def draw_points_and_arrows(ax, pts, lines, two, arrow_scale=15):
+    boundary = two.geometry.unary_union.boundary if not two.empty else None
 
-
-def draw_points_and_arrows(ax, pts, lines, two):
     for _, row in lines.iterrows():
         geom = row.geometry
         if geom.geom_type != "LineString" or len(geom.coords) < 2:
             continue
         x0, y0 = geom.coords[-1]
-        if not two.empty:
-            # use nearest point on the first 7-day polygon as arrow target
-            polygon = two.geometry.iloc[0]
-            nearest = nearest_points(polygon.boundary, shapely.Point(x0, y0))[0]
+        if boundary and not boundary.is_empty:
+            nearest = nearest_points(boundary, shapely.Point(x0, y0))[0]
             x1, y1 = nearest.x, nearest.y
         else:
             x1, y1 = x0, y0
+
         risk = (row.get("RISK2DAY") or "").title()
-        rgb = {"Low": (1, 1, 0), "Medium": (1, 0.64, 0), "High": (1, 0, 0)}.get(risk, (1, 1, 1))
-        draw_cairo_arrow(ax, x0, y0, x1, y1, rgb)
+        color = {
+            "Low": COL["two2_low"],
+            "Medium": COL["two2_med"],
+            "High": COL["two2_high"],
+        }.get(risk, "white")
+        draw_cairo_arrow(ax, x0, y0, x1, y1, color, size=arrow_scale)
 
     for _, row in pts.iterrows():
         lon, lat = row.geometry.x, row.geometry.y
