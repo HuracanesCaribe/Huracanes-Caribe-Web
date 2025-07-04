@@ -38,17 +38,17 @@ def download_gtwo_zip(url: str = "https://www.nhc.noaa.gov/xgtwo/gtwo_shapefiles
     return cache
 
 def parse_issue_time_from_xml(zip_path: pathlib.Path) -> datetime.datetime:
-    import zipfile, re, datetime
+    """Return issuance time from <caldate> inside the GTWO ZIP in UTC."""
     with zipfile.ZipFile(zip_path) as zf:
         xml_files = [n for n in zf.namelist() if n.lower().endswith(".xml")]
-        if not xml_files:
-            return datetime.datetime.now(datetime.timezone.utc)
-        xml_content = zf.read(xml_files[0]).decode("utf-8", errors="ignore")
-        match = re.search(r"<caldate>(.*?)</caldate>", xml_content, re.IGNORECASE)
-        if match:
-            # format: 'Wed Jul 02 23:51:37 2025'
-            parsed = datetime.datetime.strptime(match.group(1), "%a %b %d %H:%M:%S %Y")
-            return parsed.replace(tzinfo=datetime.timezone.utc)
+        for xml_name in xml_files:
+            xml_content = zf.read(xml_name).decode("utf-8", errors="ignore")
+            match = re.search(r"<caldate>(.*?)</caldate>", xml_content, re.IGNORECASE)
+            if match:
+                # parse as UTC
+                dt = datetime.datetime.strptime(match.group(1), "%a %b %d %H:%M:%S %Y")
+                return dt.replace(tzinfo=datetime.timezone.utc)
+    # fallback
     return datetime.datetime.now(datetime.timezone.utc)
 
 # def parse_issue_time_from_gdf(gdf: gpd.GeoDataFrame, fallback_shp: str) -> datetime.datetime:
@@ -92,7 +92,8 @@ def get_two_gdfs(basin_tag: str, data_dir="data") -> tuple[gpd.GeoDataFrame, dat
 
     gdf = gdf[gdf["BASIN"].str.contains(basin_tag, case=False, na=False)].copy()
 
-    issue_dt = parse_issue_time_from_xml(DATADIR / "two_latest.zip")   # <—— this line
+    zip_path = download_gtwo_zip()
+    issue_dt = parse_issue_time_from_xml(zip_path)
 
     gdf["PROB2DAY"] = gdf["RISK2DAY"].str.title()
     gdf["PROB7DAY"] = gdf["RISK7DAY"].str.title()
