@@ -7,6 +7,7 @@ from two_plot import build_outlook
 from datetime import datetime, timezone
 from facebook_poster import post_to_facebook
 from gtwo_fetcher import download_gtwo_shapefile
+import matplotlib.pyplot as plt
 
 with open("cron_test.log", "a") as f:
     f.write("Triggered at: " + datetime.now(timezone.utc).isoformat() + "\n")

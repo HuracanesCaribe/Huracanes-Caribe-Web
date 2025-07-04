@@ -22,7 +22,12 @@ COL = dict(
     X_low     = "#fff66d",
     X_med     = "#ffa200",
     X_high    = "#ff0000",
+
+    arrow_low  = "#fff66d",
+    arrow_med  = "#ffa200",
+    arrow_high = "#ff0000",
 )
+
 
 # ——— MAP EXTENTS ————————————————————————————————————————
 DEFAULT_EXTENT = {
