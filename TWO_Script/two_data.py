@@ -37,21 +37,42 @@ def download_gtwo_zip(url: str = "https://www.nhc.noaa.gov/xgtwo/gtwo_shapefiles
     cache.write_bytes(r.content)
     return cache
 
-
-def parse_issue_time_from_gdf(gdf: gpd.GeoDataFrame, fallback_shp: str) -> datetime.datetime:
-    """Try to infer issue datetime from GDF metadata or filename."""
-    for key in ["ISSUETIME", "ISSUEDATE", "ISSUETIM", "ISSUEDT"]:
-        if key in gdf.columns and gdf.iloc[0].get(key):
-            raw = str(gdf.iloc[0][key])
-            if len(raw) == 12:
-                return datetime.datetime.strptime(raw, "%Y%m%d%H%M").replace(tzinfo=datetime.timezone.utc)
-
-    # Fallback: pull from filename
-    m = re.search(r"(\d{12,14})", fallback_shp)
-    if m:
-        return datetime.datetime.strptime(m.group(1)[:12], "%Y%m%d%H%M").replace(tzinfo=datetime.timezone.utc)
-
+def parse_issue_time_from_xml(zip_path: pathlib.Path) -> datetime.datetime:
+    import zipfile, re, datetime
+    with zipfile.ZipFile(zip_path) as zf:
+        xml_files = [n for n in zf.namelist() if n.lower().endswith(".xml")]
+        if not xml_files:
+            return datetime.datetime.now(datetime.timezone.utc)
+        xml_content = zf.read(xml_files[0]).decode("utf-8", errors="ignore")
+        match = re.search(r"<caldate>(.*?)</caldate>", xml_content, re.IGNORECASE)
+        if match:
+            # format: 'Wed Jul 02 23:51:37 2025'
+            parsed = datetime.datetime.strptime(match.group(1), "%a %b %d %H:%M:%S %Y")
+            return parsed.replace(tzinfo=datetime.timezone.utc)
     return datetime.datetime.now(datetime.timezone.utc)
+
+# def parse_issue_time_from_gdf(gdf: gpd.GeoDataFrame, fallback_shp: str) -> datetime.datetime:
+#     """
+#     Try to infer issue datetime from GDF metadata or filename.
+#     Priority:
+#       1. metadata columns (ISSUETIME etc)
+#       2. fallback from filename
+#       3. last resort: current UTC
+#     """
+#     for key in ["ISSUETIME", "ISSUEDATE", "ISSUETIM", "ISSUEDT"]:
+#         if key in gdf.columns:
+#             raw = str(gdf.iloc[0].get(key, "")).strip()
+#             if len(raw) == 12 and raw.isdigit():
+#                 return datetime.datetime.strptime(raw, "%Y%m%d%H%M").replace(tzinfo=datetime.timezone.utc)
+
+#     # Fallback from filename
+#     m = re.search(r"(\d{12})", fallback_shp)
+#     if m:
+#         return datetime.datetime.strptime(m.group(1), "%Y%m%d%H%M").replace(tzinfo=datetime.timezone.utc)
+
+#     # truly last resort
+#     return datetime.datetime.now(datetime.timezone.utc)
+
 
 
 def get_two_gdfs(basin_tag: str, data_dir="data") -> tuple[gpd.GeoDataFrame, datetime.datetime]:
@@ -61,8 +82,7 @@ def get_two_gdfs(basin_tag: str, data_dir="data") -> tuple[gpd.GeoDataFrame, dat
 
     basin_tag = basin_tag.upper()
     data_path = pathlib.Path(data_dir)
-    
-    # pick the latest *areas* shapefile
+
     shp_files = sorted(data_path.glob("gtwo_areas_*.shp"), reverse=True)
     if not shp_files:
         raise FileNotFoundError("No gtwo_areas_*.shp found in data directory")
@@ -70,11 +90,9 @@ def get_two_gdfs(basin_tag: str, data_dir="data") -> tuple[gpd.GeoDataFrame, dat
     shp = shp_files[0]
     gdf = gpd.read_file(shp)
 
-    # filter by basin
     gdf = gdf[gdf["BASIN"].str.contains(basin_tag, case=False, na=False)].copy()
 
-    # fallback issue date to file timestamp
-    issue_dt = datetime.datetime.utcfromtimestamp(shp.stat().st_mtime).replace(tzinfo=datetime.timezone.utc)
+    issue_dt = parse_issue_time_from_xml(DATADIR / "two_latest.zip")   # <—— this line
 
     gdf["PROB2DAY"] = gdf["RISK2DAY"].str.title()
     gdf["PROB7DAY"] = gdf["RISK7DAY"].str.title()
@@ -98,7 +116,9 @@ def get_points(basin_tag: str) -> gpd.GeoDataFrame:
             return gpd.GeoDataFrame(geometry=[], crs="EPSG:4326")
 
     gdf = gpd.read_file(f"zip://{zip_path}!{shp}")
+    print(gdf.columns)
     return gdf[gdf["BASIN"].str.contains(basin_tag, case=False)]
+    
 
 
 def get_lines(basin_tag: str) -> gpd.GeoDataFrame:
@@ -111,3 +131,4 @@ def get_lines(basin_tag: str) -> gpd.GeoDataFrame:
 
     gdf = gpd.read_file(f"zip://{zip_path}!{shp}")
     return gdf[gdf["BASIN"].str.contains(basin_tag, case=False)]
+

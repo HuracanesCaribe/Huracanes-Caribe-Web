@@ -11,6 +11,7 @@ from two_map import setup_basemap, draw_two_polygons, draw_points_and_arrows, dr
 from config import COL, DEFAULT_EXTENT, FIGSIZE, DPI
 
 
+
 def build_outlook(basin: str, label: str, prefix: str,
                   outdir: pathlib.Path, timestamp: datetime.datetime) -> pathlib.Path:
         """Main function to build and save the tropical weather outlook map for one basin."""
