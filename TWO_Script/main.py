@@ -2,11 +2,11 @@
 
 import pathlib
 import argparse
-from datetime import datetime, timezone
-from two_plot import build_outlook
 from datetime import datetime, timezone, timedelta
+from two_plot import build_outlook
 from facebook_poster import post_to_facebook
 from gtwo_fetcher import download_gtwo_shapefile
+from two_data import download_gtwo_zip, parse_issue_time_from_xml
 import matplotlib.pyplot as plt
 import platform
 import shutil
@@ -28,8 +28,8 @@ def main():
                         help="Basin code: AL (Atlantic) or EP (Eastern Pacific). If omitted, both run.")
     parser.add_argument("--outdir", type=pathlib.Path, default=pathlib.Path("output"),
                         help="Directory to save output PNGs.")
-    parser.add_argument("--timestamp", default=datetime.now(timezone.utc).isoformat(),
-                        help="UTC timestamp (ISO format) to use in filenames.")
+    parser.add_argument("--timestamp", default=None,
+                        help="Override issuance timestamp in ISO format.")
     args = parser.parse_args()
 
     # Determine which basins to run
@@ -37,7 +37,11 @@ def main():
     outdir = args.outdir
     outdir.mkdir(exist_ok=True)
 
-    ts = datetime.fromisoformat(args.timestamp)
+    if args.timestamp:
+        ts = datetime.fromisoformat(args.timestamp)
+    else:
+        zip_path = download_gtwo_zip()
+        ts = parse_issue_time_from_xml(zip_path)
 
     for basin_tag, (label, prefix) in selected:
         try:

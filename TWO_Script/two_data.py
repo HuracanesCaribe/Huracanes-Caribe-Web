@@ -75,7 +75,7 @@ def parse_issue_time_from_xml(zip_path: pathlib.Path) -> datetime.datetime:
 
 
 
-def get_two_gdfs(basin_tag: str, data_dir="data") -> tuple[gpd.GeoDataFrame, datetime.datetime]:
+def get_two_gdfs(basin_tag: str, data_dir="data") -> gpd.GeoDataFrame:
     import geopandas as gpd
     import pathlib
     import datetime
@@ -92,8 +92,6 @@ def get_two_gdfs(basin_tag: str, data_dir="data") -> tuple[gpd.GeoDataFrame, dat
 
     gdf = gdf[gdf["BASIN"].str.contains(basin_tag, case=False, na=False)].copy()
 
-    zip_path = download_gtwo_zip()
-    issue_dt = parse_issue_time_from_xml(zip_path)
 
     gdf["PROB2DAY"] = gdf["RISK2DAY"].str.title()
     gdf["PROB7DAY"] = gdf["RISK7DAY"].str.title()
@@ -103,7 +101,7 @@ def get_two_gdfs(basin_tag: str, data_dir="data") -> tuple[gpd.GeoDataFrame, dat
         gdf["PROB7DAY"].isin(["Low", "Medium", "High"])
     ]
 
-    return gdf, issue_dt
+    return gdf
 
 
 
