@@ -117,7 +117,7 @@ def get_points(basin_tag: str) -> gpd.GeoDataFrame:
             return gpd.GeoDataFrame(geometry=[], crs="EPSG:4326")
 
     gdf = gpd.read_file(f"zip://{zip_path}!{shp}")
-    print(gdf.columns)
+   
     return gdf[gdf["BASIN"].str.contains(basin_tag, case=False)]
     
 
