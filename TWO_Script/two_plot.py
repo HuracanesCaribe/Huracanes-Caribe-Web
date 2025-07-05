@@ -17,7 +17,8 @@ def build_outlook(basin: str, label: str, prefix: str,
         """Main function to build and save the tropical weather outlook map for one basin."""
         tag = "Atlantic" if basin == "AL" else "Pacific"
 
-        two, issue_dt = get_two_gdfs(tag)
+        two = get_two_gdfs(tag)
+        issue_dt = timestamp
         points = get_points(tag)
         lines  = get_lines(tag)
 
