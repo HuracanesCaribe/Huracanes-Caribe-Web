@@ -8,6 +8,7 @@ import datetime
 import requests
 import geopandas as gpd
 from config import DATADIR
+import shutil
 
 
 def read_caldate_from_zip(zip_path: pathlib.Path, tag="areas") -> datetime.datetime | None:
@@ -26,16 +27,45 @@ def read_caldate_from_zip(zip_path: pathlib.Path, tag="areas") -> datetime.datet
     return dt.replace(tzinfo=datetime.timezone.utc)
 
 
-def download_gtwo_zip(url: str = "https://www.nhc.noaa.gov/xgtwo/gtwo_shapefiles.zip",
-                      cache: pathlib.Path = DATADIR / "two_latest.zip") -> pathlib.Path:
-    """Download GTWO ZIP if older than 3 hours or missing."""
-    if cache.exists() and cache.stat().st_mtime > time.time() - 3 * 3600:
-        return cache
+def download_gtwo_zip(
+    url: str = "https://www.nhc.noaa.gov/xgtwo/gtwo_shapefiles.zip"
+) -> pathlib.Path:
+    """
+    Download GTWO ZIP to data_archive/YYYY-MM-DD/ with timestamp
+    based on the <caldate> found in the XML inside the zip.
+    """
+    # download to a truly temp location, like /tmp
+    tmp_path = pathlib.Path("/tmp/two_latest.zip")
 
+    # always download fresh
     r = requests.get(url, timeout=30)
     r.raise_for_status()
-    cache.write_bytes(r.content)
-    return cache
+    tmp_path.write_bytes(r.content)
+
+    # parse caldate
+    with zipfile.ZipFile(tmp_path) as zf:
+        xml_name = next(n for n in zf.namelist() if n.lower().endswith(".xml"))
+        xml_content = zf.read(xml_name).decode("utf-8", errors="ignore")
+        match = re.search(r"<caldate>(.*?)</caldate>", xml_content, re.IGNORECASE)
+        if not match:
+            raise ValueError("No <caldate> found in XML")
+        issue_dt = datetime.datetime.strptime(
+            match.group(1), "%a %b %d %H:%M:%S %Y"
+        ).replace(tzinfo=datetime.timezone.utc)
+
+    today_str = issue_dt.strftime("%Y-%m-%d")
+    timestamp_str = issue_dt.strftime("%Y%m%dT%H%MZ")
+
+    archive_dir = DATADIR.parent / "data_archive" / today_str
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    archive_path = archive_dir / f"gtwo_shapefiles_{timestamp_str}.zip"
+
+    shutil.move(tmp_path, archive_path)
+
+    print(f"✅ Saved GTWO to {archive_path}")
+    return archive_path
+
+
 
 def parse_issue_time_from_xml(zip_path: pathlib.Path) -> datetime.datetime:
     """Return issuance time from <caldate> inside the GTWO ZIP in UTC."""
@@ -51,51 +81,19 @@ def parse_issue_time_from_xml(zip_path: pathlib.Path) -> datetime.datetime:
     # fallback
     return datetime.datetime.now(datetime.timezone.utc)
 
-# def parse_issue_time_from_gdf(gdf: gpd.GeoDataFrame, fallback_shp: str) -> datetime.datetime:
-#     """
-#     Try to infer issue datetime from GDF metadata or filename.
-#     Priority:
-#       1. metadata columns (ISSUETIME etc)
-#       2. fallback from filename
-#       3. last resort: current UTC
-#     """
-#     for key in ["ISSUETIME", "ISSUEDATE", "ISSUETIM", "ISSUEDT"]:
-#         if key in gdf.columns:
-#             raw = str(gdf.iloc[0].get(key, "")).strip()
-#             if len(raw) == 12 and raw.isdigit():
-#                 return datetime.datetime.strptime(raw, "%Y%m%d%H%M").replace(tzinfo=datetime.timezone.utc)
-
-#     # Fallback from filename
-#     m = re.search(r"(\d{12})", fallback_shp)
-#     if m:
-#         return datetime.datetime.strptime(m.group(1), "%Y%m%d%H%M").replace(tzinfo=datetime.timezone.utc)
-
-#     # truly last resort
-#     return datetime.datetime.now(datetime.timezone.utc)
-
-
-
-def get_two_gdfs(basin_tag: str, data_dir="data") -> gpd.GeoDataFrame:
-    import geopandas as gpd
-    import pathlib
-    import datetime
+def get_two_gdfs(basin_tag: str, zip_path: pathlib.Path) -> gpd.GeoDataFrame:
+    """Load the GTWO areas shapefile for a basin directly from the ZIP archive."""
 
     basin_tag = basin_tag.upper()
-    data_path = pathlib.Path(data_dir)
-
-    shp_files = sorted(data_path.glob("gtwo_areas_*.shp"), reverse=True)
-    if not shp_files:
-        raise FileNotFoundError("No gtwo_areas_*.shp found in data directory")
-
-    shp = shp_files[0]
-    from zipfile import ZipFile
-
-    with ZipFile("data/gtwo_shapefiles.zip") as zf:
-        # find the .shp file with 'gtwo_areas' in name
-        shp_name = next(name for name in zf.namelist() if name.endswith(".shp") and "gtwo_areas" in name)
+    with zipfile.ZipFile(zip_path) as zf:
+        # find the .shp file with "gtwo_areas" in its name (timestamp varies)
+        shp_name = next(
+            n for n in zf.namelist()
+            if n.lower().endswith(".shp") and "gtwo_areas" in n.lower()
+        )
 
     # then geopandas can read:
-    gdf = gpd.read_file(f"zip://data/gtwo_shapefiles.zip!{shp_name}")
+    gdf = gpd.read_file(f"zip://{zip_path}!{shp_name}")
     gdf = gdf[gdf["BASIN"].str.contains(basin_tag, case=False, na=False)].copy()
 
     gdf["PROB2DAY"] = gdf["RISK2DAY"].str.title()
@@ -111,9 +109,8 @@ def get_two_gdfs(basin_tag: str, data_dir="data") -> gpd.GeoDataFrame:
 
 
 
-def get_points(basin_tag: str) -> gpd.GeoDataFrame:
-    zip_path = download_gtwo_zip()
-
+def get_points(basin_tag: str, zip_path: pathlib.Path) -> gpd.GeoDataFrame:
+    """Load the GTWO points shapefile for a basin directly from the ZIP archive."""
     with zipfile.ZipFile(zip_path) as zf:
         shp = next((n for n in zf.namelist() if n.endswith(".shp") and "points" in n.lower()), None)
         if not shp:
@@ -125,8 +122,7 @@ def get_points(basin_tag: str) -> gpd.GeoDataFrame:
     
 
 
-def get_lines(basin_tag: str) -> gpd.GeoDataFrame:
-    zip_path = download_gtwo_zip()
+def get_lines(basin_tag: str, zip_path: pathlib.Path) -> gpd.GeoDataFrame:
 
     with zipfile.ZipFile(zip_path) as zf:
         shp = next((n for n in zf.namelist() if n.endswith(".shp") and "lines" in n.lower()), None)

@@ -12,15 +12,15 @@ from config import COL, DEFAULT_EXTENT, FIGSIZE, DPI
 
 
 
-def build_outlook(basin: str, label: str, prefix: str,
-                  outdir: pathlib.Path, timestamp: datetime.datetime) -> pathlib.Path:
+def build_outlook(basin, label, prefix, outdir, timestamp, zip_path):
+
         """Main function to build and save the tropical weather outlook map for one basin."""
         tag = "Atlantic" if basin == "AL" else "Pacific"
-
-        two = get_two_gdfs(tag)
+        
+        two = get_two_gdfs(tag, zip_path)
         issue_dt = timestamp
-        points = get_points(tag)
-        lines  = get_lines(tag)
+        points = get_points(tag, zip_path)
+        lines  = get_lines(tag, zip_path)
 
         fig = plt.figure(figsize=FIGSIZE)
         ax  = plt.axes(projection=ccrs.PlateCarree())
