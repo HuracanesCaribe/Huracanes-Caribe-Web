@@ -11,10 +11,8 @@ venv/
 *.log
 
 # Generated data and output
-data/
+data_archive/
 output/
-tropical_gtwo_project/data/
-tropical_gtwo_project/output/
 
 # OS / editor files
 .DS_Store
