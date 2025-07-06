@@ -44,7 +44,7 @@ from pathlib import Path
 
 BASE = Path(__file__).resolve().parent.parent   # one level up to project root
 OUTDIR = BASE / "output"
-DATADIR = BASE / "data"
+DATADIR = BASE / "data_archive"
 
 OUTDIR.mkdir(exist_ok=True)
 DATADIR.mkdir(exist_ok=True)
