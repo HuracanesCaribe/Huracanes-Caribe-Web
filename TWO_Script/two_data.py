@@ -88,8 +88,14 @@ def get_two_gdfs(basin_tag: str, data_dir="data") -> gpd.GeoDataFrame:
         raise FileNotFoundError("No gtwo_areas_*.shp found in data directory")
 
     shp = shp_files[0]
-    gdf = gpd.read_file(shp)
+    from zipfile import ZipFile
 
+    with ZipFile("data/gtwo_shapefiles.zip") as zf:
+        # find the .shp file with 'gtwo_areas' in name
+        shp_name = next(name for name in zf.namelist() if name.endswith(".shp") and "gtwo_areas" in name)
+
+    # then geopandas can read:
+    gdf = gpd.read_file(f"zip://data/gtwo_shapefiles.zip!{shp_name}")
     gdf = gdf[gdf["BASIN"].str.contains(basin_tag, case=False, na=False)].copy()
 
     gdf["PROB2DAY"] = gdf["RISK2DAY"].str.title()

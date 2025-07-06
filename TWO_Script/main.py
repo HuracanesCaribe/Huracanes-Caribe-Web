@@ -45,7 +45,7 @@ def main():
 
     for basin_tag, (label, prefix) in selected:
         try:
-            download_gtwo_shapefile(basin_tag)
+            #download_gtwo_shapefile(basin_tag)
             out_path = build_outlook(basin_tag, label, prefix, outdir, ts)
             issue_dt = parse_issue_time_from_xml(zip_path)
             print(f"{basin_tag} timestamp from XML: {issue_dt.isoformat()}")
