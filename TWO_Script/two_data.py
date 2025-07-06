@@ -75,27 +75,20 @@ def parse_issue_time_from_xml(zip_path: pathlib.Path) -> datetime.datetime:
 
 
 
-def get_two_gdfs(basin_tag: str, data_dir="data") -> gpd.GeoDataFrame:
-    import geopandas as gpd
-    import pathlib
-    import datetime
+def get_two_gdfs(basin_tag: str) -> gpd.GeoDataFrame:
+    """Load the GTWO areas shapefile for a basin directly from the ZIP archive."""
 
+    zip_path = DATADIR / "gtwo_shapefiles.zip"
     basin_tag = basin_tag.upper()
-    data_path = pathlib.Path(data_dir)
 
-    shp_files = sorted(data_path.glob("gtwo_areas_*.shp"), reverse=True)
-    if not shp_files:
-        raise FileNotFoundError("No gtwo_areas_*.shp found in data directory")
+    with zipfile.ZipFile(zip_path) as zf:
+        # find the .shp file with "gtwo_areas" in its name (timestamp varies)
+        shp_name = next(
+            n for n in zf.namelist()
+            if n.lower().endswith(".shp") and "gtwo_areas" in n.lower()
+        )
 
-    shp = shp_files[0]
-    from zipfile import ZipFile
-
-    with ZipFile("data/gtwo_shapefiles.zip") as zf:
-        # find the .shp file with 'gtwo_areas' in name
-        shp_name = next(name for name in zf.namelist() if name.endswith(".shp") and "gtwo_areas" in name)
-
-    # then geopandas can read:
-    gdf = gpd.read_file(f"zip://data/gtwo_shapefiles.zip!{shp_name}")
+    gdf = gpd.read_file(f"zip://{zip_path}!{shp_name}")
     gdf = gdf[gdf["BASIN"].str.contains(basin_tag, case=False, na=False)].copy()
 
     gdf["PROB2DAY"] = gdf["RISK2DAY"].str.title()
