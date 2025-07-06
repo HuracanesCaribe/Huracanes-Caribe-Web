@@ -201,8 +201,10 @@ def draw_legend(ax, basin, issue_dt):
 
 def draw_timestamp(ax, basin, issue_dt):
     from zoneinfo import ZoneInfo
-    tz = ZoneInfo("US/Eastern" if basin == "AL" else "US/Pacific")
+    tz = ZoneInfo("US/Eastern" if basin == "AL" else "America/Los_Angeles")
     local_dt = issue_dt.astimezone(tz)
+    print(f"DEBUG: {basin} — issue_dt: {issue_dt.isoformat()}, local_dt: {local_dt.isoformat()}")
+
     stamp = "\n".join([
         "Issuance:",
         local_dt.strftime("%A %d %b %Y"),

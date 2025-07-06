@@ -17,7 +17,8 @@ def build_outlook(basin: str, label: str, prefix: str,
         """Main function to build and save the tropical weather outlook map for one basin."""
         tag = "Atlantic" if basin == "AL" else "Pacific"
 
-        two, issue_dt = get_two_gdfs(tag)
+        two = get_two_gdfs(tag)
+        issue_dt = timestamp
         points = get_points(tag)
         lines  = get_lines(tag)
 
@@ -35,11 +36,12 @@ def build_outlook(basin: str, label: str, prefix: str,
 
         fig.subplots_adjust(left=0.005, right=0.995, bottom=0.02, top=0.995)
 
-        # --- keep the map from autoscaling when we add polygons -------------
+        # final lock to avoid resizing
+        ax.set_autoscale_on(False)
         ax.set_extent(DEFAULT_EXTENT[basin], crs=ccrs.PlateCarree())
-        ax.set_autoscale_on(False)        # turn autoscaling off
-        ax.apply_aspect()                 # re-align ticks / gridlines
-        # after drawing everything else …
+        ax.set_xlim(DEFAULT_EXTENT[basin][0], DEFAULT_EXTENT[basin][1])
+        ax.set_ylim(DEFAULT_EXTENT[basin][2], DEFAULT_EXTENT[basin][3])
+        ax.apply_aspect()
   
         fig.suptitle(
         f"Combined Graphical Tropical Weather Outlook for {label}",
