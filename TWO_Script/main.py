@@ -100,10 +100,10 @@ def main():
             print(f"✅ Saved: {out_path.relative_to(outdir.parent)}")
 
             # you could re-enable facebook here if you wish:
-            # post_to_facebook(
-            #     image_path=out_path,
-            #     caption=f"{label} GTWO update – {ts.strftime('%Y-%m-%d %H:%M UTC')}"
-            # )
+            post_to_facebook(
+                image_path=out_path,
+                caption=f"{label} GTWO update – {ts.strftime('%Y-%m-%d %H:%M UTC')}"
+            )
 
         except Exception as e:
             print(f"❌ Failed for {basin_tag}: {e}")

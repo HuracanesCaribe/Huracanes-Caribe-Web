@@ -29,9 +29,24 @@ def build_outlook(basin, label, prefix, outdir, timestamp, zip_path):
 
         # Draw map layers, grid, and labels
         setup_basemap(ax, basin)
-        draw_two_polygons(ax, two)
-        draw_points_and_arrows(ax, points, lines, two)
-        draw_legend(ax, basin, issue_dt)
+
+        # ➕ If no TWO areas exist, show fallback message and skip rest of plotting
+        if two.empty:
+                ax.text(
+                        0.5, 0.5,
+                        f"Tropical cyclone formation is not expected during the next 7 days.",
+                        transform=ax.transAxes,
+                        ha="center", va="center",
+                        fontsize=16, weight="bold", color="black",
+                        bbox=dict(boxstyle="round", facecolor="white", edgecolor="black", alpha=0.8),
+                        zorder=100
+        )
+        else:
+        # Only draw these if TWO areas are present
+                draw_two_polygons(ax, two)
+                draw_points_and_arrows(ax, points, lines, two)
+                draw_legend(ax, basin, issue_dt)
+
         draw_timestamp(ax, basin, issue_dt)
 
         fig.subplots_adjust(left=0.005, right=0.995, bottom=0.02, top=0.995)
@@ -53,19 +68,42 @@ def build_outlook(basin, label, prefix, outdir, timestamp, zip_path):
         fig.text(
         0.5,
         0.87,            # ≈ 3 % under the title
-        "Creado por Huracanes Caribe - www.huracanescaribe.com -",
+        "Created by Huracanes Caribe - www.huracanescaribe.com -",
         ha="center",
         va="top",
         fontsize=18,
         )
 
         # Footer
-        stamp = issue_dt.strftime("%d %b %Y %H:%M UTC")
-        ax.text(0, -0.01, f"Updated {stamp}", transform=ax.transAxes,
-                ha="left", va="top", fontsize=8, style="italic", weight="bold")
-        ax.text(1, -0.01, "Data: NHC • Map: Huracanes Caribe",
-                transform=ax.transAxes, ha="right", va="top",
+        from datetime import datetime, timezone
+        from zoneinfo import ZoneInfo
+
+        # Use current UTC time
+        now_utc = datetime.now(timezone.utc)
+        stamp_utc = now_utc.strftime("%d %b %Y %H:%M UTC")
+
+        # Determine local time zone by basin
+        local_tz = ZoneInfo("America/New_York") if basin == "AL" else ZoneInfo("America/Los_Angeles")
+        now_local = now_utc.astimezone(local_tz)
+
+        # Format local time as 12-hour clock with AM/PM, no date
+        stamp_local = now_local.strftime("%I:%M %p %Z").lstrip("0")  # e.g., "4:45 PM EDT"
+
+        # Footer left: runtime UTC + local time
+        ax.text(0, -0.01,
+                f"Generated {stamp_utc} / {stamp_local}",
+                transform=ax.transAxes,
+                ha="left", va="top",
                 fontsize=8, style="italic", weight="bold")
+
+        # Footer right: GTWO issue time (from XML) in UTC
+        issue_str = issue_dt.strftime("%d %b %Y %H:%M UTC")
+        ax.text(1, -0.01,
+                f"Data: NHC ({issue_str}) • Map: Huracanes Caribe",
+                transform=ax.transAxes,
+                ha="right", va="top",
+                fontsize=8, style="italic", weight="bold")
+
 
         # Save
         out_path = outdir / f"{prefix}_{timestamp:%Y%m%dT%H%MZ}.png"
