@@ -18,20 +18,20 @@ def file_hash(path, algo="md5"):
 
 def post_to_facebook(image_path: str, caption: str = ""):
     """Upload image to Facebook Page if the image is new (not previously posted)."""
-    import os
-    import requests
+    # import os
+    # import requests
 
-    # 🔢 Step 1: Compute hash of current image
-    current_hash = file_hash(image_path)
-    hash_record_path = f"{image_path}.hash"
+    # # 🔢 Step 1: Compute hash of current image
+    # current_hash = file_hash(image_path)
+    # hash_record_path = f"{image_path}.hash"
 
-    # 🔍 Step 2: Check if image hash matches last posted
-    if os.path.exists(hash_record_path):
-        with open(hash_record_path) as f:
-            last_hash = f.read().strip()
-        if current_hash == last_hash:
-            print("⏩ Skipping post: image unchanged.")
-            return None  # skip upload
+    # # 🔍 Step 2: Check if image hash matches last posted
+    # if os.path.exists(hash_record_path):
+    #     with open(hash_record_path) as f:
+    #         last_hash = f.read().strip()
+    #     if current_hash == last_hash:
+    #         print("⏩ Skipping post: image unchanged.")
+    #         return None  # skip upload
 
     # 📤 Step 3: Post to Facebook
     url = f"https://graph.facebook.com/v23.0/{PAGE_ID}/photos"
@@ -46,8 +46,8 @@ def post_to_facebook(image_path: str, caption: str = ""):
     if response.ok:
         print("✅ Posted to Facebook:", response.json().get("post_id", response.text))
         # 📝 Step 4: Save current hash
-        with open(hash_record_path, "w") as f:
-            f.write(current_hash)
+        #with open(hash_record_path, "w") as f:
+            #f.write(current_hash)
     else:
         print("❌ Facebook post failed:", response.status_code)
         print(response.json())
