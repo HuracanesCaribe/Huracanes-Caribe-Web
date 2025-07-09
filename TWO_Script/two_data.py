@@ -62,7 +62,8 @@ def download_gtwo_zip(
 
     shutil.move(tmp_path, archive_path)
 
-    print(f"✅ Saved GTWO to {archive_path}")
+    print(f"✅ GTWO: {archive_path.name}")
+
     return archive_path
 
 
