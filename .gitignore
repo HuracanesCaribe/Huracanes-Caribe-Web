@@ -4,7 +4,7 @@ __pycache__/
 *.pyd
 *.so
 *.egg-info/
-.env/
+TWO_Script/.envs/.env
 venv/
 
 # Logs

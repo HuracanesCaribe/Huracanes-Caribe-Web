@@ -99,20 +99,6 @@ def main():
             out_path = build_outlook(basin_tag, label, prefix, outdir, ts, zip_path)
             print(f"✅ Saved: {out_path.relative_to(outdir.parent)}")
 
-            # you could re-enable facebook here if you wish:
-            import zoneinfo
-
-            # Post only if current time is 08:00 AM in EDT
-            now = datetime.now(zoneinfo.ZoneInfo("America/New_York"))
-            if now.hour == 8 and now.minute == 0:
-                post_to_facebook(
-                    image_path=out_path,
-                    caption=f"{label} GTWO update – {ts.strftime('%Y-%m-%d %H:%M UTC')}"
-                )
-            else:
-                print(f"⏩ Not posting to Facebook. Current EDT time: {now.strftime('%H:%M')}")
-
-
         except Exception as e:
             print(f"❌ Failed for {basin_tag}: {e}")
 
