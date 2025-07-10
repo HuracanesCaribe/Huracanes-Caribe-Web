@@ -12,7 +12,9 @@ import shutil
 import os
 from zipfile import ZipFile
 
-with open("cron_test.log", "a") as f:
+from pathlib import Path
+LOG_PATH = Path(__file__).parent / "main_runs.log"
+with open(LOG_PATH, "a") as f:
     f.write("Triggered at: " + datetime.now(timezone.utc).isoformat() + "\n")
 
 # Available basins and their config
@@ -98,20 +100,6 @@ def main():
         try:
             out_path = build_outlook(basin_tag, label, prefix, outdir, ts, zip_path)
             print(f"✅ Saved: {out_path.relative_to(outdir.parent)}")
-
-            # you could re-enable facebook here if you wish:
-            import zoneinfo
-
-            # Post only if current time is 08:00 AM in EDT
-            now = datetime.now(zoneinfo.ZoneInfo("America/New_York"))
-            if now.hour == 8 and now.minute == 0:
-                post_to_facebook(
-                    image_path=out_path,
-                    caption=f"{label} GTWO update – {ts.strftime('%Y-%m-%d %H:%M UTC')}"
-                )
-            else:
-                print(f"⏩ Not posting to Facebook. Current EDT time: {now.strftime('%H:%M')}")
-
 
         except Exception as e:
             print(f"❌ Failed for {basin_tag}: {e}")
