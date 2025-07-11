@@ -6,24 +6,33 @@ from pathlib import Path
 from datetime import datetime
 import zoneinfo
 import re
-
+import socket
 from dotenv import load_dotenv
 from openai import OpenAI
 from facebook_poster import post_to_facebook
 
 PAGE_CONFIG = {
     "393356640516670": "en",  # Hurricanes US
-    "571167226380026": "es",  # Huracanes Caribe
+    #"571167226380026": "es",  # Huracanes Caribe
 }
+# --- Environment detection ---
+HOSTNAME = socket.gethostname()
 
-# --- Constants ---
-BASE_DIR = Path(__file__).resolve().parent
-PROJECT_DIR = BASE_DIR.parent
-OUTPUT_DIR = PROJECT_DIR / "output"
-DATA_DIR = PROJECT_DIR / "data_archive"
+if "huracanes-caribe-vm" in HOSTNAME:
+    # Server setup
+    BASE_DIR = Path("/home/ubuntu/Huracanes-Caribe-Web")
+    OUTPUT_DIR = Path("/var/www/html/output")
+    DATA_DIR = BASE_DIR / "data_archive"  # 👈 Add this too
+    ENV_PATH = BASE_DIR / "TWO_Script" / ".envs" / ".env"
+else:
+    # Local Mac setup
+    BASE_DIR = Path("/Users/tejedawx/Projects/HuracanesCaribe")
+    OUTPUT_DIR = BASE_DIR / "output"
+    DATA_DIR = BASE_DIR / "data_archive"  # 👈 Add this too
+    ENV_PATH = BASE_DIR / "TWO_Script" / ".envs" / ".env"
 
-# --- Load secrets ---
-load_dotenv(dotenv_path=BASE_DIR / ".envs" / ".env")
+# --- Load environment variables ---
+load_dotenv(dotenv_path=ENV_PATH)
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
@@ -60,9 +69,10 @@ def generate_facebook_caption_with_gpt(rtf_text: str, basin: str, lang: str = "e
 Eres un comunicador meteorológico de confianza para redes sociales como Facebook y X. Tu tarea es generar una publicación clara, cálida y profesional en español caribeño, basada en el siguiente resumen oficial del Centro Nacional de Huracanes (NHC) sobre el panorama de ciclones tropicales en el {basin}.
 
 Normas:
+- Añade la fecha del pronóstico en la primera frase, por ejemplo: "A partir del {date.today().strftime('%d de %B')},"
 - Escribe entre 60 y 100 palabras (preferible 60–70, máximo 150).
 - Observa el mapa y el texto: si dice “No tropical cyclones expected”, no digas lo contrario.
-- Usa entre 1 y 3 párrafos, según la longitud del texto.
+- Usa entre 1 y 3 párrafos, según la longitud del texto, y añade un salto de línea entre párrafos.
 - Usa un tono amigable y creíble, que se sienta local y humano.
 - No uses saludos ni títulos exagerados, formales o cringy (ej: “¡Hola amigos del Caribe!”).
 - Usa español neutro y correcto, sin títulos.
@@ -80,9 +90,10 @@ Resumen GTWO (limpio):
 You are a trusted weather communicator for social media audiences in the Caribbean. Your task is to generate a warm, clear, and professional Facebook post in **English** summarizing the following official tropical weather outlook from the National Hurricane Center (NHC) for the {basin} basin.
 
 Guidelines:
+- Add the date of the outlook in the first sentence, e.g. "As of {date.today().strftime('%B %d')},"
 - Write between 60 and 100 words (ideally 60–70, max 150).
 - Observe both the map and the text. If it says “No tropical cyclones expected,” do **not** say otherwise.
-- Use 1–3 paragraphs depending on the length of the outlook.
+- Use 1–3 paragraphs depending on the length of the outlook and use an extra line break between paragraphs.
 - Use a friendly, credible tone that feels local and human.
 - Avoid overly formal, exaggerated, or cringy greetings (e.g., “Hello Caribbean friends!”).
 - Use neutral, natural English — avoid ALL CAPS or technical language unless necessary.
@@ -159,7 +170,7 @@ def main():
     rtf_texts = extract_gtwo_rtf_text(latest_zip)
 
     for page_id, lang in PAGE_CONFIG.items():
-        for basin in ["atlantic", "eastpac"]:
+        for basin in ["atlantic"]:
             image = find_latest_image(basin)
 
             if not image:
