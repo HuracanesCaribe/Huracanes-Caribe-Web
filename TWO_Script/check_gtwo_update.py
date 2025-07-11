@@ -2,10 +2,12 @@
 
 import pathlib
 import subprocess
-
 from pathlib import Path
 import datetime
 from two_data import download_gtwo_zip, parse_issue_time_from_xml
+import sys
+
+PYTHON = sys.executable
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 LAST_TS_FILE = Path(__file__).parent / "last_gtwo_time.txt"
@@ -28,7 +30,7 @@ LAST_TS_FILE.write_text(new_ts)
 
 # Run main.py
 
-PYTHON = "/Users/tejedawx/miniconda3/envs/huracanes/bin/python"
+
 MAIN_SCRIPT = Path(__file__).parent / "main.py"
 
 print(f"⚡ GTWO updated — running main.py\n -----------------------------------")
