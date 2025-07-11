@@ -69,7 +69,7 @@ def generate_facebook_caption_with_gpt(rtf_text: str, basin: str, lang: str = "e
 Eres un comunicador meteorológico de confianza para redes sociales como Facebook y X. Tu tarea es generar una publicación clara, cálida y profesional en español caribeño, basada en el siguiente resumen oficial del Centro Nacional de Huracanes (NHC) sobre el panorama de ciclones tropicales en el {basin}.
 
 Normas:
-- Añade la fecha del pronóstico en la primera frase, por ejemplo: "A partir del {date.today().strftime('%d de %B')},"
+- Añade la fecha del pronóstico en el primer parrafo, por ejemplo: "A partir del {date.today().strftime('%d de %B')},"
 - Escribe entre 60 y 100 palabras (preferible 60–70, máximo 150).
 - Observa el mapa y el texto: si dice “No tropical cyclones expected”, no digas lo contrario.
 - Usa entre 1 y 3 párrafos, según la longitud del texto, y añade un salto de línea entre párrafos.
@@ -90,7 +90,7 @@ Resumen GTWO (limpio):
 You are a trusted weather communicator for social media audiences in the Caribbean. Your task is to generate a warm, clear, and professional Facebook post in **English** summarizing the following official tropical weather outlook from the National Hurricane Center (NHC) for the {basin} basin.
 
 Guidelines:
-- Add the date of the outlook in the first sentence, e.g. "As of {date.today().strftime('%B %d')},"
+- Add the date of the outlook in the first paragraph, e.g. "As of {date.today().strftime('%B %d')},"
 - Write between 60 and 100 words (ideally 60–70, max 150).
 - Observe both the map and the text. If it says “No tropical cyclones expected,” do **not** say otherwise.
 - Use 1–3 paragraphs depending on the length of the outlook and use an extra line break between paragraphs.
