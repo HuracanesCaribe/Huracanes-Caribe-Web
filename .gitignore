@@ -4,7 +4,7 @@ __pycache__/
 *.pyd
 *.so
 *.egg-info/
-.env/
+TWO_Script/.envs/.env
 venv/
 
 # Logs
@@ -16,3 +16,6 @@ output/
 
 # OS / editor files
 .DS_Store
+.env
+.env
+.envs/
