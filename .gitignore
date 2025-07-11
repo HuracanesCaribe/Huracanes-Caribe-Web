@@ -17,3 +17,5 @@ output/
 # OS / editor files
 .DS_Store
 .env
+.env
+.envs/
