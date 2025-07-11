@@ -1,14 +1,24 @@
-import requests
 import os
-#PAGE_ACCESS_TOKEN = os.environ["FB_PAGE_TOKEN"]
-PAGE_ACCESS_TOKEN = "EAAR78aP6Ln8BOZCBrReILBmjOOxQLIl5qL567bfWltObPOZBUtqrwOEmU8m2dZAK7AjPr0M0seFuoMseQD13fRByZC9iNJ7LIAHsvpDmpeHgWKUWds8mWbtN38N53C6ZB7VeiwRlOeUkfZAbrzzuBewLIKZBCP8oJQ57bEf5T9ZAIGZB0gmuRz91YZAYcX1tnS0bbKvYXnZAgmTY9dhnygZC5wbgtEqM"
-PAGE_ID = "393356640516670"  # Huracanes Caribe
+import hashlib
+import requests
+from pathlib import Path
+from dotenv import load_dotenv
 
-GRAPH_API_URL = f"https://graph.facebook.com/v23.0/{PAGE_ID}/photos"
+# Load environment variables from the .env file (adjust path as needed)
+BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(dotenv_path=BASE_DIR / "TWO_Script" / ".envs" / ".env")
 
-def post_to_facebook(image_path: str, caption: str, page_id: str, token: str = None, force: bool = False):
-    import hashlib
+def post_to_facebook(image_path: str, caption: str, page_id: str, force: bool = False):
+    """Posts image and caption to the Facebook page using the page-specific token."""
+    
+    # Load correct token
+    token = os.getenv(f"FB_PAGE_TOKEN_{page_id}")
+    if not token:
+        raise ValueError(f"⚠️ No token found for page ID: {page_id}")
 
+    graph_url = f"https://graph.facebook.com/v18.0/{page_id}/photos"
+
+    # Compute file hash to skip duplicate posts
     def file_hash(path, algo="md5"):
         h = hashlib.new(algo)
         with open(path, "rb") as f:
@@ -16,15 +26,8 @@ def post_to_facebook(image_path: str, caption: str, page_id: str, token: str = N
                 h.update(chunk)
         return h.hexdigest()
 
-    # Use passed-in token or fall back to env var
-    access_token = token or os.getenv(f"FB_PAGE_TOKEN_{page_id}")
-    if not access_token:
-        raise ValueError(f"No access token provided or found for page ID: {page_id}")
-
-    graph_url = f"https://graph.facebook.com/v18.0/{page_id}/photos"
     current_hash = file_hash(image_path)
     hash_record_path = f"{image_path}.{page_id}.hash"
-
 
     if not force and os.path.exists(hash_record_path):
         with open(hash_record_path) as f:
@@ -33,14 +36,16 @@ def post_to_facebook(image_path: str, caption: str, page_id: str, token: str = N
             print("⏩ Skipping post: image unchanged.")
             return
 
+    # Send POST request to Facebook
     with open(image_path, "rb") as img:
         payload = {
-            "access_token": access_token,
+            "access_token": token,
             "caption": caption,
         }
         files = {"source": img}
         response = requests.post(graph_url, data=payload, files=files)
 
+    # Handle response
     if response.ok:
         print("✅ Posted to Facebook:", response.json().get("post_id", response.text))
         with open(hash_record_path, "w") as f:
@@ -48,4 +53,3 @@ def post_to_facebook(image_path: str, caption: str, page_id: str, token: str = N
     else:
         print("❌ Facebook post failed:", response.status_code)
         print(response.json())
-

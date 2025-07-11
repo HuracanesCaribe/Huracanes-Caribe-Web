@@ -18,8 +18,9 @@ PAGE_CONFIG = {
 
 # --- Constants ---
 BASE_DIR = Path(__file__).resolve().parent
-OUTPUT_DIR = BASE_DIR.parent / "output"
-DATA_DIR = BASE_DIR.parent / "data_archive"
+PROJECT_DIR = BASE_DIR.parent
+OUTPUT_DIR = PROJECT_DIR / "output"
+DATA_DIR = PROJECT_DIR / "data_archive"
 
 # --- Load secrets ---
 load_dotenv(dotenv_path=BASE_DIR / ".envs" / ".env")
