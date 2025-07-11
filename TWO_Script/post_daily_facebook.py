@@ -119,14 +119,21 @@ Cleaned NHC outlook:
 
 
 def find_latest_image(basin_keyword: str) -> Path | None:
-    """Find the latest image for the given basin."""
-    folders = sorted(OUTPUT_DIR.glob("*"), reverse=True)
-    for folder in folders:
-        if folder.is_dir():
-            candidates = sorted(folder.glob(f"*{basin_keyword}*.png"), reverse=True)
-            if candidates:
-                return candidates[0]
+    from datetime import date
+
+    today_folder = date.today().strftime("%Y-%m-%d")
+    image_dir = OUTPUT_DIR / today_folder
+
+    if not image_dir.exists():
+        print(f"❌ Output folder not found: {image_dir}")
+        return None
+
+    candidates = sorted(image_dir.glob(f"*{basin_keyword}*.png"), reverse=True)
+    if candidates:
+        return candidates[0]
+    
     return None
+
 
 
 def find_latest_zip() -> Path | None:
