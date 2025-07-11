@@ -10,6 +10,8 @@ venv/
 # Logs
 *.log
 facebook_caption_log.txt
+last_gtwo_time.txt
+TWO_Script/facebook_caption_log.txt
 
 # Generated data and output
 data_archive/
