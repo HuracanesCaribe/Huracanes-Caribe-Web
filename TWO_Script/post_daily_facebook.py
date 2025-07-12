@@ -13,7 +13,7 @@ from facebook_poster import post_to_facebook
 
 PAGE_CONFIG = {
     "393356640516670": "en",  # Hurricanes US
-    #"571167226380026": "es",  # Huracanes Caribe
+    "571167226380026": "es",  # Huracanes Caribe
 }
 # --- Environment detection ---
 HOSTNAME = socket.gethostname()
@@ -73,6 +73,17 @@ def is_image_recent(image_path: Path) -> bool:
 def generate_facebook_caption_with_gpt(rtf_text: str, basin: str, lang: str = "en") -> str:
     """Generate a Facebook caption in warm, professional Caribbean English using GPT."""
     import re
+    from datetime import datetime
+    # Detect timezone for date formatting
+    if "huracanes-caribe-vm" in HOSTNAME:
+        LOCAL_TZ = zoneinfo.ZoneInfo("America/New_York")
+    else:
+        LOCAL_TZ = zoneinfo.ZoneInfo("America/Santo_Domingo")
+
+    local_now = datetime.now(LOCAL_TZ)
+    today_str_es = local_now.strftime('%d de %B')
+    today_str_en = local_now.strftime('%B %d')
+
     rtf_text_cleaned = re.sub(r"{\\.*?}|\\[a-z]+\d*|{|}", "", rtf_text)
 
     if lang == "es":
@@ -80,14 +91,15 @@ def generate_facebook_caption_with_gpt(rtf_text: str, basin: str, lang: str = "e
 Eres un comunicador meteorológico de confianza para redes sociales como Facebook y X. Tu tarea es generar una publicación clara, cálida y profesional en español caribeño, basada en el siguiente resumen oficial del Centro Nacional de Huracanes (NHC) sobre el panorama de ciclones tropicales en el {basin}.
 
 Normas:
-- Añade la fecha del pronóstico en el primer parrafo {date.today().strftime('%d de %B')},"
+- Añade la fecha del pronóstico en cualquier posicion del primer parrafo {today_str_es},"
 - Escribe entre 60 y 100 palabras (preferible 60–70, máximo 150).
-- Puedes usar títulos, pero no los separes del texto.
 - Observa el mapa y el texto: si dice “No tropical cyclones expected”, no digas lo contrario.
 - Usa entre 1 y 3 párrafos, según la longitud del texto, y añade un salto de línea entre párrafos.
 - Usa un tono amigable y creíble, que se sienta local y humano.
 - No uses saludos ni títulos exagerados, formales o cringy (ej: “¡Hola amigos del Caribe!”).
-- Usa español neutro y correcto, sin títulos.
+- Usa español neutro y correcto. 
+- No uses titulos separados de la primera oracion.
+- Evita el uso de mayúsculas excesivas o lenguaje técnico, salvo que sea necesario.
 - Resalta si hay sistemas con probabilidad de formación (baja, media, alta).
 - Usa emojis apropiados 🌧️🌀⚠️ para visibilidad y conexión emocional.
 - Incluye principios sutiles de influencia (urgencia, autoridad, prueba social) sin que se noten.
@@ -102,14 +114,15 @@ Resumen GTWO (limpio):
 You are a trusted weather communicator for social media audiences in the Caribbean. Your task is to generate a warm, clear, and professional Facebook post in **English** summarizing the following official tropical weather outlook from the National Hurricane Center (NHC) for the {basin} basin.
 
 Guidelines:
-- Add the date of the outlook in the first paragraph {date.today().strftime('%B %d')},"
+- Add the date of the outlook in any position of the first paragraph {today_str_en},"
 - Write between 60 and 100 words (ideally 60–70, max 150).
-- You can use titles but dont separately from the text.
 - Observe both the map and the text. If it says “No tropical cyclones expected,” do **not** say otherwise.
 - Use 1–3 paragraphs depending on the length of the outlook and use an extra line break between paragraphs.
 - Use a friendly, credible tone that feels local and human.
 - Avoid overly formal, exaggerated, or cringy greetings (e.g., “Hello Caribbean friends!”).
-- Use neutral, natural English — avoid ALL CAPS or technical language unless necessary.
+- Use neutral, natural English.
+- Do not use titles separate from the first sentence.
+- Avoid ALL CAPS or technical language unless necessary.
 - Highlight any systems with low, medium, or high formation chances.
 - Use appropriate emojis 🌧️🌀⚠️ for visibility and emotional connection.
 - Subtly include behavioral influence (urgency, authority, social proof) without making it obvious.
