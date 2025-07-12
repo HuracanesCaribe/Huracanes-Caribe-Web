@@ -53,11 +53,22 @@ def extract_gtwo_rtf_text(zip_path: Path) -> dict:
     return rtf_texts
 
 from datetime import date, timezone
+from datetime import datetime, timezone
+import re
 
-def is_image_from_today(image_path: Path) -> bool:
-    """Check if image filename includes today's date."""
-    today_utc = datetime.now(timezone.utc).strftime("%Y%m%d")
-    return today_utc in image_path.name
+def is_image_recent(image_path: Path) -> bool:
+    """Accepts image if it's from today or yesterday (UTC), based on filename."""
+    match = re.search(r"_(\d{8})T", image_path.name)
+    if not match:
+        return False
+
+    image_date = datetime.strptime(match.group(1), "%Y%m%d").date()
+    today_utc = datetime.now(timezone.utc).date()
+    yesterday_utc = today_utc - timedelta(days=1)
+
+    return image_date in {today_utc, yesterday_utc}
+
+
 
 def generate_facebook_caption_with_gpt(rtf_text: str, basin: str, lang: str = "en") -> str:
     """Generate a Facebook caption in warm, professional Caribbean English using GPT."""
@@ -69,8 +80,9 @@ def generate_facebook_caption_with_gpt(rtf_text: str, basin: str, lang: str = "e
 Eres un comunicador meteorológico de confianza para redes sociales como Facebook y X. Tu tarea es generar una publicación clara, cálida y profesional en español caribeño, basada en el siguiente resumen oficial del Centro Nacional de Huracanes (NHC) sobre el panorama de ciclones tropicales en el {basin}.
 
 Normas:
-- Añade la fecha del pronóstico en el primer parrafo, por ejemplo: "A partir del {date.today().strftime('%d de %B')},"
+- Añade la fecha del pronóstico en el primer parrafo {date.today().strftime('%d de %B')},"
 - Escribe entre 60 y 100 palabras (preferible 60–70, máximo 150).
+- Puedes usar títulos, pero no los separes del texto.
 - Observa el mapa y el texto: si dice “No tropical cyclones expected”, no digas lo contrario.
 - Usa entre 1 y 3 párrafos, según la longitud del texto, y añade un salto de línea entre párrafos.
 - Usa un tono amigable y creíble, que se sienta local y humano.
@@ -90,8 +102,9 @@ Resumen GTWO (limpio):
 You are a trusted weather communicator for social media audiences in the Caribbean. Your task is to generate a warm, clear, and professional Facebook post in **English** summarizing the following official tropical weather outlook from the National Hurricane Center (NHC) for the {basin} basin.
 
 Guidelines:
-- Add the date of the outlook in the first paragraph, e.g. "As of {date.today().strftime('%B %d')},"
+- Add the date of the outlook in the first paragraph {date.today().strftime('%B %d')},"
 - Write between 60 and 100 words (ideally 60–70, max 150).
+- You can use titles but dont separately from the text.
 - Observe both the map and the text. If it says “No tropical cyclones expected,” do **not** say otherwise.
 - Use 1–3 paragraphs depending on the length of the outlook and use an extra line break between paragraphs.
 - Use a friendly, credible tone that feels local and human.
@@ -129,22 +142,28 @@ Cleaned NHC outlook:
             return f"{basin.capitalize()} — Info not available for the moment."
 
 
+from datetime import datetime, timedelta, timezone
+from datetime import date, timedelta
+
+
 def find_latest_image(basin_keyword: str) -> Path | None:
-    from datetime import date
+    """Try to find the latest image for today (UTC). If none found, fallback to yesterday."""
+    for day_offset in [0, -1]:
+        date_folder = (datetime.now(timezone.utc) + timedelta(days=day_offset)).strftime("%Y-%m-%d")
+        image_dir = OUTPUT_DIR / date_folder
 
-    today_folder = date.today().strftime("%Y-%m-%d")
-    image_dir = OUTPUT_DIR / today_folder
+        if not image_dir.exists():
+            if day_offset == 0:
+                print(f"⚠️ Folder does not exist: {image_dir}")
+            continue
 
-    if not image_dir.exists():
-        print(f"❌ Output folder not found: {image_dir}")
-        return None
+        candidates = sorted(image_dir.glob(f"*{basin_keyword}*.png"), reverse=True)
+        if candidates:
+            print(f"📁 Using image from {date_folder}: {candidates[0].name}")
+            return candidates[0]
 
-    candidates = sorted(image_dir.glob(f"*{basin_keyword}*.png"), reverse=True)
-    if candidates:
-        return candidates[0]
-    
+    print(f"❌ No image found for basin: {basin_keyword}")
     return None
-
 
 
 def find_latest_zip() -> Path | None:
@@ -177,8 +196,8 @@ def main():
                 print(f"❌ No image for {basin}.")
                 continue
 
-            if not is_image_from_today(image):
-                print(f"⏭️ Skipping {basin} — image is not from today.")
+            if not is_image_recent(image):
+                print(f"⏭️ Skipping {basin} — image is not from today or yesterday.")
                 continue
 
 
