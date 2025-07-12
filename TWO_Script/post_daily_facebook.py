@@ -52,12 +52,12 @@ def extract_gtwo_rtf_text(zip_path: Path) -> dict:
                         rtf_texts["pacific"] = content
     return rtf_texts
 
-from datetime import date
+from datetime import date, timezone
 
 def is_image_from_today(image_path: Path) -> bool:
     """Check if image filename includes today's date."""
-    today_str = date.today().strftime("%Y%m%d")
-    return today_str in image_path.name
+    today_utc = datetime.now(timezone.utc).strftime("%Y%m%d")
+    return today_utc in image_path.name
 
 def generate_facebook_caption_with_gpt(rtf_text: str, basin: str, lang: str = "en") -> str:
     """Generate a Facebook caption in warm, professional Caribbean English using GPT."""
