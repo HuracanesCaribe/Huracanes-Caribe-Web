@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 
 from two_data import get_two_gdfs, get_points, get_lines
-from two_map import setup_basemap, draw_two_polygons, draw_points_and_arrows, draw_legend, draw_timestamp
+from two_map import setup_basemap, draw_two_polygons, draw_points_and_arrows, draw_legend, draw_timestamp, label_two_areas
 from config import COL, DEFAULT_EXTENT, FIGSIZE, DPI
 
 
@@ -44,35 +44,37 @@ def build_outlook(basin, label, prefix, outdir, timestamp, zip_path):
         else:
         # Only draw these if TWO areas are present
                 draw_two_polygons(ax, two)
+                label_two_areas(ax, two, points)
                 draw_points_and_arrows(ax, points, lines, two)
                 draw_legend(ax, basin, issue_dt)
 
         draw_timestamp(ax, basin, issue_dt)
 
-        fig.subplots_adjust(left=0.005, right=0.995, bottom=0.02, top=0.995)
+        fig.subplots_adjust(left=0.005, right=0.995, bottom=0.02, top=0.91)
 
-        # final lock to avoid resizing
-        ax.set_autoscale_on(False)
-        ax.set_extent(DEFAULT_EXTENT[basin], crs=ccrs.PlateCarree())
-        ax.set_xlim(DEFAULT_EXTENT[basin][0], DEFAULT_EXTENT[basin][1])
-        ax.set_ylim(DEFAULT_EXTENT[basin][2], DEFAULT_EXTENT[basin][3])
-        ax.apply_aspect()
+        # # final lock to avoid resizing
+        # ax.set_extent(DEFAULT_EXTENT[basin], crs=ccrs.PlateCarree())
+        # ax.set_autoscale_on(False)
+        # ax.apply_aspect()
   
         fig.suptitle(
         f"Combined Graphical Tropical Weather Outlook for {label}",
         fontsize=20,
         weight="bold",
-        y=0.90,          # ≈ 3 % below the top of the canvas
+        y=0.99,  # top of the figure
         )
+
 
         fig.text(
         0.5,
-        0.87,            # ≈ 3 % under the title
-        "Created by Huracanes Caribe - www.huracanescaribe.com -",
+        0.950,  # just under suptitle (adjust if needed)
+        "Created by Huracanes Caribe – www.huracanescaribe.com –",
         ha="center",
         va="top",
-        fontsize=18,
+        fontsize=14,  # slightly smaller for hierarchy
         )
+
+
 
         # Footer
         from datetime import datetime, timezone
@@ -104,10 +106,16 @@ def build_outlook(basin, label, prefix, outdir, timestamp, zip_path):
                 ha="right", va="top",
                 fontsize=8, style="italic", weight="bold")
 
+        # 🔒 FINAL LOCK to prevent shrinking after plotting
+        ax.set_autoscale_on(False)
+        ax.set_extent(DEFAULT_EXTENT[basin], crs=ccrs.PlateCarree())
+        ax.set_xlim(DEFAULT_EXTENT[basin][0], DEFAULT_EXTENT[basin][1])
+        ax.set_ylim(DEFAULT_EXTENT[basin][2], DEFAULT_EXTENT[basin][3])
+        ax.apply_aspect()
 
         # Save
         out_path = outdir / f"{prefix}_{timestamp:%Y%m%dT%H%MZ}.png"
-        fig.savefig(out_path, dpi=DPI, bbox_inches="tight")
+        fig.savefig(out_path, dpi=DPI, transparent=False)
         plt.close(fig)
 
         return out_path

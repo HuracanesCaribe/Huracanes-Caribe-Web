@@ -4,7 +4,6 @@ import pathlib
 import argparse
 from two_plot import build_outlook
 from datetime import datetime, timezone, timedelta
-from facebook_poster import post_to_facebook
 from two_data import download_gtwo_zip, parse_issue_time_from_xml
 import matplotlib.pyplot as plt
 import platform

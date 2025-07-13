@@ -17,10 +17,10 @@ from config import COL
 
 def setup_basemap(ax, basin):
     ax.add_feature(cfeature.LAND.with_scale("10m"), facecolor=COL["land"])
-    ax.add_feature(cfeature.LAKES.with_scale("10m"), facecolor=COL["lake"])
-    ax.add_feature(cfeature.COASTLINE.with_scale("10m"), edgecolor=COL["coast"])
-    ax.add_feature(cfeature.BORDERS.with_scale("10m"), edgecolor=COL["border"])
-    ax.add_feature(cfeature.STATES.with_scale("50m"), edgecolor=COL["coast"])
+    ax.add_feature(cfeature.LAKES.with_scale("10m"), facecolor=COL["lake"], zorder=10)
+    ax.add_feature(cfeature.COASTLINE.with_scale("10m"), edgecolor=COL["coast"], zorder=10)
+    ax.add_feature(cfeature.BORDERS.with_scale("10m"), edgecolor=COL["border"], zorder=10)
+    ax.add_feature(cfeature.STATES.with_scale("50m"), edgecolor=COL["coast"], zorder=10)
 
     gl = ax.gridlines(draw_labels=False, linewidth=1, color="#222", linestyle=":", alpha=0.7)
     gl.xlocator = mticker.MultipleLocator(5)
@@ -53,10 +53,13 @@ def setup_basemap(ax, basin):
     x_range = xmax - xmin if xmax != xmin else 1
     y_range = ymax - ymin if ymax != ymin else 1
 
-    for lon in xticks:
+    for i, lon in enumerate(xticks):
+        if i == len(xticks) - 1:
+            continue  # ❌ Skip last longitude label to avoid overlap
         hemi = "W" if lon < 0 else ("E" if lon > 0 else "")
         pos_x = (lon - xmin) / x_range
         halo(pos_x, 0.995, f"{abs(lon):.0f}°{hemi}", ha="center", va="top")
+
 
     for lat in yticks:
         hemi = "S" if lat < 0 else ("N" if lat > 0 else "")
@@ -67,6 +70,8 @@ def setup_basemap(ax, basin):
 def draw_two_polygons(ax, two):
     cmap2 = {"Low": COL["two2_low"], "Medium": COL["two2_med"], "High": COL["two2_high"]}
     cmap7 = {"Low": COL["two7_low"], "Medium": COL["two7_med"], "High": COL["two7_high"]}
+    mapped_colors = two["PROB2TEXT"].map(cmap2).fillna("white")
+
 
     if not two.empty:
         # 7-day outline first
@@ -75,35 +80,104 @@ def draw_two_polygons(ax, two):
         # 2-day color fill
         two.plot(
             ax=ax,
-            facecolor=two["PROB2DAY"].map(cmap2),
+            facecolor=mapped_colors,
             edgecolor="black",
             linewidth=0.5,
-            alpha=0.9,
+            alpha=0.85,
             zorder=6,
             transform=ccrs.PlateCarree()
         )
 
         # 7-day hatch
         for level in ["Low", "Medium", "High"]:
-            subset = two[two["PROB7DAY"] == level]
+            subset = two[two["PROB7TEXT"] == level]
             if not subset.empty:
                 subset.plot(
                     ax=ax,
                     facecolor="none",
-                    edgecolor=cmap7[level],
+                    edgecolor="yellow",
                     hatch="////",
                     linewidth=3,
                     zorder=7
                 )
 
+def label_two_areas(ax, two, pts):
+    from shapely.geometry import Point
+
+    offset_directions = [(0, 4), (0, -4), (4, 0), (-4, 0)]  # N, S, E, W
+    used_positions = []
+    direction_idx = 0
+
+    xmin, xmax, ymin, ymax = ax.get_extent(crs=ccrs.PlateCarree())
+
+    for i, (_, row) in enumerate(two.iterrows(), start=1):
+        geom = row.geometry
+        cx, cy = geom.centroid.x, geom.centroid.y
+
+        # Skip labeling if there's a disturbance already inside
+        if any(geom.contains(pt.geometry) for _, pt in pts.iterrows()):
+            continue
+
+        area_num = row.get("AREA", "?")
+        risk2 = row.get("PROB2TEXT", "Unknown").title()
+        pct2 = row.get("PROB2DAY", "?")
+        risk7 = row.get("PROB7TEXT", "Unknown").title()
+        pct7 = row.get("PROB7DAY", "?")
+
+        color = {
+            "Low": COL["two2_low"],
+            "Medium": COL["two2_med"],
+            "High": COL["two2_high"]
+        }.get(risk2, "white")
+
+        label = f"AREA {area_num}\n{risk2}: {pct2} in 2 days\n{risk7}: {pct7} in 7 days"
+
+        # Try different offsets and avoid collisions with other labels
+        for attempt in range(len(offset_directions)):
+            dx, dy = offset_directions[(direction_idx + attempt) % len(offset_directions)]
+            tx, ty = cx + dx, cy + dy
+
+            # check bounds
+            if not (xmin + 1 < tx < xmax - 1 and ymin + 1 < ty < ymax - 1):
+                continue
+
+            # check overlap with previously used positions (Euclidean distance)
+            too_close = any((abs(tx - x) < 1.5 and abs(ty - y) < 1.5) for (x, y) in used_positions)
+            if not too_close:
+                break
+
+        used_positions.append((tx, ty))
+        direction_idx += 1
+
+        ax.text(
+            tx, ty, label,
+            transform=ccrs.PlateCarree(),
+            color=color, weight="bold", fontsize=14,
+            path_effects=[pe.Stroke(linewidth=4, foreground="black", alpha=0.9), pe.Normal()],
+            zorder=10
+        )
+
+
 
    
 def draw_points_and_arrows(ax, pts, lines, two):
+    import shapely.geometry as sgeom
+
+    # Store used label positions to avoid overlap
+    used_positions = []
+    def is_far_enough(x, y, min_dist=2.0):
+        return all(np.hypot(x - px, y - py) > min_dist for px, py in used_positions)
+
+    # Label offset directions (dx, dy)
+    offset_directions = [(2, 2), (2, -2), (-2, -2), (-2, 2), (3, 0), (0, 3), (-3, 0), (0, -3)]
+    direction_idx = 0
+
     # disturbances
     for _, row in pts.iterrows():
         lon, lat = row.geometry.x, row.geometry.y
         risk2 = (row.get("RISK2DAY") or "").title()
         color = {"Low": COL["two2_low"], "Medium": COL["two2_med"], "High": COL["two2_high"]}.get(risk2, "white")
+
         ax.scatter(lon, lat, marker="x", s=400, linewidths=14, color="black",
                    transform=ccrs.PlateCarree(), zorder=8)
         ax.scatter(lon, lat, marker="x", s=300, linewidths=8, color=color,
@@ -113,20 +187,20 @@ def draw_points_and_arrows(ax, pts, lines, two):
         prob2 = row.get("PROB2DAY", "").strip()
         prob7 = row.get("PROB7DAY", "").strip()
 
-        if num:
-            if num.isdigit():
-                invest_label = f"Disturbance {num}"
-            else:
-                invest_label = f"Invest {num}"
-        else:
-            invest_label = "Disturbance"
+        label = f"Disturbance {num}\n({row.get('PROB2DAY', '')} in 2 Days \n {row.get('PROB7DAY', '')}) in 7 days"
 
-        label = f"Disturbance {num}\n({row.get('PROB2DAY', '')} / {row.get('PROB7DAY', '')}) in 2/7 days"
-
-        ax.text(lon + 2, lat - 2, label, transform=ccrs.PlateCarree(),
-                color=color, weight="bold", fontsize=16,
-                path_effects=[pe.Stroke(linewidth=5, foreground="black", alpha=0.9), pe.Normal()],
-                zorder=10)
+        # Try multiple offset directions to find non-overlapping spot
+        for _ in range(len(offset_directions)):
+            dx, dy = offset_directions[direction_idx % len(offset_directions)]
+            direction_idx += 1
+            tx, ty = lon + dx, lat + dy
+            if is_far_enough(tx, ty):
+                used_positions.append((tx, ty))
+                ax.text(tx, ty, label, transform=ccrs.PlateCarree(),
+                        color=color, weight="bold", fontsize=16,
+                        path_effects=[pe.Stroke(linewidth=5, foreground="black", alpha=0.9), pe.Normal()],
+                        zorder=10)
+                break
 
     # arrows
     for _, row in lines.iterrows():
@@ -136,11 +210,9 @@ def draw_points_and_arrows(ax, pts, lines, two):
         x0, y0 = geom.coords[0]
         x1, y1 = geom.coords[-1]
 
-        # get the nearest disturbance to the arrow origin
-        nearest_disturbance = pts.distance(shapely.Point(x0, y0)).idxmin()
+        nearest_disturbance = pts.distance(sgeom.Point(x0, y0)).idxmin()
         disturbance_pt = pts.loc[nearest_disturbance].geometry
 
-        # suppress the arrow if disturbance point is inside any TWO polygon
         if not two.empty and two.contains(disturbance_pt).any():
             continue
 
@@ -177,7 +249,7 @@ def draw_legend(ax, basin, issue_dt):
         Patch(facecolor=COL["two2_low"], edgecolor="black"),
         Patch(facecolor=COL["two2_med"], edgecolor="black"),
         Patch(facecolor=COL["two2_high"], edgecolor="black"),
-        Patch(facecolor="none", edgecolor=COL["two7_low"], hatch="////", linewidth=1.5),
+        Patch(facecolor="none", edgecolor='Yellow', hatch="////", linewidth=1.5),
         Patch(facecolor="none", edgecolor=COL["two7_med"], hatch="////", linewidth=1.5),
         Patch(facecolor="none", edgecolor=COL["two7_high"], hatch="////", linewidth=1.5),
         Line2D([0], [0], linestyle="-", color="white", lw=2,
@@ -195,6 +267,7 @@ def draw_legend(ax, basin, issue_dt):
     leg = ax.legend(handles, labels, loc="lower left",
                     title=r"$\bf{Genesis\ Probabilities}$",
                     fontsize=10, title_fontsize=16)
+    leg.set_zorder(1000)  # 🔥 Bring legend to the top
     for text in leg.get_texts():
         text.set_fontsize(12)
 
@@ -213,6 +286,6 @@ def draw_timestamp(ax, basin, issue_dt):
     ax.text(0.94, 0.02, stamp, transform=ax.transAxes,
             ha="right", va="bottom", fontsize=14, weight="bold",
             color="white", path_effects=[pe.Stroke(linewidth=3, foreground="black"), pe.Normal()],
-            zorder=100)
+            zorder=1000)
 
 

@@ -83,53 +83,64 @@ def parse_issue_time_from_xml(zip_path: pathlib.Path) -> datetime.datetime:
     return datetime.datetime.now(datetime.timezone.utc)
 
 def get_two_gdfs(basin_tag: str, zip_path: pathlib.Path) -> gpd.GeoDataFrame:
-    """Load the GTWO areas shapefile for a basin directly from the ZIP archive."""
-
     basin_tag = basin_tag.upper()
     with zipfile.ZipFile(zip_path) as zf:
-        # find the .shp file with "gtwo_areas" in its name (timestamp varies)
         shp_name = next(
             n for n in zf.namelist()
             if n.lower().endswith(".shp") and "gtwo_areas" in n.lower()
         )
 
-    # then geopandas can read:
     gdf = gpd.read_file(f"zip://{zip_path}!{shp_name}")
     gdf = gdf[gdf["BASIN"].str.contains(basin_tag, case=False, na=False)].copy()
 
-    gdf["PROB2DAY"] = gdf["RISK2DAY"].str.title()
-    gdf["PROB7DAY"] = gdf["RISK7DAY"].str.title()
+    # Risk category labels
+    gdf["PROB2TEXT"] = gdf["RISK2DAY"].str.title()
+    gdf["PROB7TEXT"] = gdf["RISK7DAY"].str.title()
 
+    # Convert to percentage strings
+    gdf["PROB2DAY"] = gdf["PROB2DAY"].astype(str).str.strip().str.replace("%", "") + "%"
+    gdf["PROB7DAY"] = gdf["PROB7DAY"].astype(str).str.strip().str.replace("%", "") + "%"
+
+    # ✅ Correct filter
     gdf = gdf[
-        gdf["PROB2DAY"].isin(["Low", "Medium", "High"]) | 
-        gdf["PROB7DAY"].isin(["Low", "Medium", "High"])
+        gdf["PROB2TEXT"].isin(["Low", "Medium", "High"]) |
+        gdf["PROB7TEXT"].isin(["Low", "Medium", "High"])
     ]
+
+    # print(gdf.columns.tolist())
+    # print(gdf.head())
 
     return gdf
 
 
 
 
+
 def get_points(basin_tag: str, zip_path: pathlib.Path) -> gpd.GeoDataFrame:
-    """Load the GTWO points shapefile for a basin directly from the ZIP archive."""
     with zipfile.ZipFile(zip_path) as zf:
         shp = next((n for n in zf.namelist() if n.endswith(".shp") and "points" in n.lower()), None)
         if not shp:
             return gpd.GeoDataFrame(geometry=[], crs="EPSG:4326")
 
     gdf = gpd.read_file(f"zip://{zip_path}!{shp}")
-   
-    return gdf[gdf["BASIN"].str.contains(basin_tag, case=False)]
+    gdf = gdf[gdf["BASIN"].str.contains(basin_tag, case=False)].copy()
+
+    # ✅ Add AREA numbers
+    # gdf["AREA"] = [str(i + 1) for i in range(len(gdf))]
+    # print(f"✅ Raw GTWO lines shape: {gpd.read_file(f'zip://{zip_path}!{shp}').shape}")
+    # print(f"✅ Loaded {len(gdf)} points for {basin_tag} with AREA numbers")
+
+    return gdf
     
 
 
 def get_lines(basin_tag: str, zip_path: pathlib.Path) -> gpd.GeoDataFrame:
-
     with zipfile.ZipFile(zip_path) as zf:
         shp = next((n for n in zf.namelist() if n.endswith(".shp") and "lines" in n.lower()), None)
         if not shp:
             return gpd.GeoDataFrame(geometry=[], crs="EPSG:4326")
 
     gdf = gpd.read_file(f"zip://{zip_path}!{shp}")
-    return gdf[gdf["BASIN"].str.contains(basin_tag, case=False)]
+    gdf = gdf[gdf["BASIN"].str.contains(basin_tag, case=False)].copy()
 
+    return gdf

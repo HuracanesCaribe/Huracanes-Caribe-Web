@@ -31,12 +31,12 @@ COL = dict(
 
 # ——— MAP EXTENTS ————————————————————————————————————————
 DEFAULT_EXTENT = {
-    "AL": [-100, -8, 4, 46],       # Atlantic
+    "AL": [-100, -8, 5.5, 46],       # Atlantic
     "EP": [-130, -78, 4, 30]      # East Pacific
 }
 
 # ——— FIGURE OUTPUT SETTINGS ——————————————————————————————
-FIGSIZE = (14, 11)
+FIGSIZE = (14, 8)
 DPI     = 300
 
 # ——— FILESYSTEM PATHS ——————————————————————————————————————
