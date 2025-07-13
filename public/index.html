@@ -1,160 +1,119 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Huracanes Caribe | Precision Hurricane Intelligence</title>
-
-  <!-- Favicon -->
-  <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
-
-  <!-- Google Font -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap">
-
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Huracanes Caribe</title>
+  <style>
+    body {
+      background-color: #f4f4f4;
+      color: #0a2540;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    header img {
+      max-height: 100px;
+      margin-bottom: 10px;
+    }
+    h1 {
+      font-size: 2em;
+      margin: 0;
+    }
+    p.subtitle {
+      text-align: center;
+      font-size: 1.1em;
+      margin-bottom: 30px;
+      color: #333;
+    }
+    h2 {
+      font-size: 1.2em;
+      margin-top: 40px;
+      margin-bottom: 10px;
+      border-bottom: 2px solid #0a2540;
+      padding-bottom: 5px;
+    }
+    .link-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+    }
+    a.button {
+      background-color: #0a2540;
+      color: white;
+      padding: 12px;
+      text-align: center;
+      text-decoration: none;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: background 0.3s;
+    }
+    a.button:hover {
+      background-color: #133c6d;
+    }
+    .icon {
+      height: 20px;
+    }
+    footer {
+      text-align: center;
+      font-size: 0.9em;
+      margin-top: 50px;
+      color: #666;
+    }
+  </style>
 </head>
 <body>
+  <div class="container">
+    <header>
+      <img src="New Logo HC.png" alt="Logo Huracanes Caribe">
+      <h1>Huracanes Caribe</h1>
+      <p class="subtitle">Canales oficiales y comunidad por plataforma y país</p>
+    </header>
 
-  <!-- ╔═════════ Nav ═════════╗ -->
-  <header class="nav">
-    <div class="container nav-flex">
-      <a href="#" class="brand"><img src="assets/logo.svg" alt=""> Huracanes <b>Caribe</b></a>
-
-      <nav id="menu">
-        <a href="#about">Por qué</a>
-        <a href="#features">Funciones</a>
-        <a href="#community">Comunidad</a>
-        <a href="#contact">Contacto</a>
-      </nav>
-
-      <!-- mobile burger -->
-      <button id="burger" aria-label="Abrir menú"></button>
+    <h2>🌐 Sitio Web Oficial</h2>
+    <div class="link-grid">
+      <a class="button" href="https://www.huracanescaribe.com" target="_blank">
+        <img class="icon" src="https://img.icons8.com/color/48/domain.png" alt="Web">huracanescaribe.com
+      </a>
     </div>
-  </header>
 
-  <!-- ╔═════════ Hero ═════════╗ -->
-  <section class="hero">
-    <div class="container">
-      <h1 class="hero__title">Pronósticos <span>hiper-locales</span><br>para todo el Caribe</h1>
-      <p class="hero__subtitle">
-        Mapas de riesgo, alertas en tiempo real y una red de voluntarios para
-        prepararte antes, durante y después del huracán.
-      </p>
-
-      <a href="https://chat.whatsapp.com/your-invite-link"
-         class="btn btn--accent">Únete a la Comunidad →</a>
+    <h2>📱 Redes Sociales</h2>
+    <div class="link-grid">
+      <a class="button" href="#"><img class="icon" src="https://img.icons8.com/color/48/facebook.png" alt="Facebook">Facebook</a>
+      <a class="button" href="#"><img class="icon" src="https://img.icons8.com/color/48/twitter--v1.png" alt="X">X (Twitter)</a>
+      <a class="button" href="#"><img class="icon" src="https://img.icons8.com/color/48/instagram-new.png" alt="Instagram">Instagram</a>
+      <a class="button" href="#"><img class="icon" src="https://img.icons8.com/color/48/youtube-play.png" alt="YouTube">YouTube</a>
+      <a class="button" href="#"><img class="icon" src="https://img.icons8.com/color/48/tiktok--v1.png" alt="TikTok">TikTok</a>
     </div>
-    <svg class="separator" viewBox="0 0 1440 110"><path d="M0,110 C480,0 960,0 1440,110 V0 H0 Z"></path></svg>
-  </section>
 
-  <!-- ╔═════════ About ═════════╗ -->
-  <section id="about" class="about container">
-    <h2>¿Qué nos hace diferentes?</h2>
-    <p class="about__blurb">
-      Fusionamos datos de <strong>NOAA</strong>, <strong>ECMWF</strong> y
-      modelos propios para ofrecer probabilidades ciudad-a-ciudad:
-      viento, lluvia, tornado y marejada. Todo en un solo panel interactivo.
-    </p>
-  </section>
-
-  <!-- ╔═════════ Features grid ═════════╗ -->
-  <section id="features" class="features">
-    <div class="container grid">
-      <article>
-        <img src="assets/icon-map.svg" alt="">
-        <h3>Mapas Dinámicos</h3>
-        <p>Capas interactivas creadas con Python + Pycairo. Pan, zoom, compartir.</p>
-      </article>
-      <article>
-        <img src="assets/icon-bell.svg" alt="">
-        <h3>Alertas Proactivas</h3>
-        <p>Notificaciones push y WhatsApp cuando tu zona cruza umbrales de riesgo.</p>
-      </article>
-      <article>
-        <img src="assets/icon-community.svg" alt="">
-        <h3>Inteligencia Colectiva</h3>
-        <p>Usuarios reportan cortes, inundaciones y daños para afinar el modelo.</p>
-      </article>
+    <h2>📢 Canales (Broadcast)</h2>
+    <div class="link-grid">
+      <a class="button" href="#"><img class="icon" src="https://img.icons8.com/color/48/whatsapp--v1.png" alt="WhatsApp">WhatsApp</a>
+      <a class="button" href="#"><img class="icon" src="https://img.icons8.com/color/48/telegram-app.png" alt="Telegram">Telegram</a>
+      <a class="button" href="#"><img class="icon" src="https://img.icons8.com/color/48/facebook-messenger.png" alt="Messenger">Messenger</a>
     </div>
-  </section>
 
-  <!-- ╔═════════ Testimonials (CSS slider) ═════════╗ -->
-  <section class="testimonials">
-    <div class="container">
-      <h2>Lo que dice la comunidad</h2>
-
-      <div class="slider">
-        <input type="radio" name="t" id="t-1" checked>
-        <input type="radio" name="t" id="t-2">
-        <input type="radio" name="t" id="t-3">
-
-        <div class="slides">
-          <figure>
-            <blockquote>“Las alertas llegaron horas antes que las
-            oficiales—pude asegurar mi negocio a tiempo.”</blockquote>
-            <figcaption>— Elisa R., San Juan 🇵🇷</figcaption>
-          </figure>
-          <figure>
-            <blockquote>“Los mapas de Huracanes Caribe fueron
-            esenciales para planear rutas de evacuación en mi
-            municipio.”</blockquote>
-            <figcaption>— Juan M., Cancún 🇲🇽</figcaption>
-          </figure>
-          <figure>
-            <blockquote>“Me uní al grupo de WhatsApp y encontré ayuda
-            para mi familia tras el impacto.”</blockquote>
-            <figcaption>— Carla S., Kingston 🇯🇲</figcaption>
-          </figure>
-        </div>
-
-        <div class="dots">
-          <label for="t-1"></label>
-          <label for="t-2"></label>
-          <label for="t-3"></label>
-        </div>
-      </div>
+    <h2>👥 Comunidad (Chats)</h2>
+    <div class="link-grid">
+      <a class="button" href="#"><img class="icon" src="https://img.icons8.com/color/48/whatsapp--v1.png" alt="WhatsApp">Comunidad WhatsApp</a>
+      <a class="button" href="#"><img class="icon" src="https://img.icons8.com/color/48/telegram-app.png" alt="Telegram">Comunidad Telegram</a>
     </div>
-  </section>
 
-  <!-- ╔═════════ CTA / Newsletter ═════════╗ -->
-  <section class="cta">
-    <h2>Mantente un paso adelante del próximo ciclón.</h2>
-    <form class="cta__form" action="https://example.com/subscribe" method="post">
-      <input type="email" name="email" placeholder="Tu correo electrónico" required>
-      <button class="btn">Suscribirse</button>
-    </form>
-  </section>
-
-  <!-- ╔═════════ Contact ═════════╗ -->
-  <section id="contact" class="contact container">
-    <h2>Contacto directo</h2>
-    <form action="mailto:hola@huracanescaribe.com" method="post" enctype="text/plain">
-      <input required name="name"  placeholder="Nombre">
-      <input required name="email" type="email" placeholder="Email">
-      <textarea required name="msg"  rows="4" placeholder="¿En qué podemos ayudarte?"></textarea>
-      <button class="btn btn--accent">Enviar mensaje</button>
-    </form>
-  </section>
-
-  <!-- ╔═════════ Footer ═════════╗ -->
-  <footer>
-    <div class="container footer-flex">
-      <div>&copy; 2025 Huracanes Caribe</div>
-      <nav>
-        <a href="#">Términos</a>
-        <a href="#">Privacidad</a>
-        <a href="#top">Arriba ↑</a>
-      </nav>
-    </div>
-  </footer>
-
-  <!-- Mobile nav toggle -->
-  <script>
-    const burger = document.getElementById('burger');
-    const menu   = document.getElementById('menu');
-    burger.onclick = () => menu.classList.toggle('open');
-  </script>
+    <footer>
+      © 2025 Huracanes Caribe. Todos los derechos reservados.
+    </footer>
+  </div>
 </body>
 </html>
