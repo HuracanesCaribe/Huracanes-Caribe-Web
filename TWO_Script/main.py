@@ -31,21 +31,36 @@ def main():
     args = parser.parse_args()
 
     # download GTWO zip and parse timestamp
+    # if args.timestamp:
+    #     ts = datetime.fromisoformat(args.timestamp)
+    #     zip_path = None  # you cannot archive in that case
+    # else:
+    #     zip_path = download_gtwo_zip()
+    #     ts = parse_issue_time_from_xml(zip_path)
+        
+
     if args.timestamp:
         ts = datetime.fromisoformat(args.timestamp)
-        zip_path = None  # you cannot archive in that case
+        timestamp_str = ts.strftime("%Y%m%dT%H%MZ")
+
+        zip_path = Path(__file__).resolve().parent / "data_archive" / ts.strftime("%Y-%m-%d") / f"gtwo_shapefiles_{timestamp_str}.zip"
+        if not zip_path.exists():
+            raise FileNotFoundError(f"❌ GTWO zip not found at: {zip_path}")
     else:
         zip_path = download_gtwo_zip()
         ts = parse_issue_time_from_xml(zip_path)
+        timestamp_str = ts.strftime("%Y%m%dT%H%MZ")
 
+    # ✅ MOVE THIS UP HERE
     today_str = ts.strftime("%Y-%m-%d")
-    timestamp_str = ts.strftime("%Y%m%dT%H%MZ")
+
+
 
     # build the target directory for images
     if platform.system() == "Linux":
         target_dir = f"/var/www/html/output/{today_str}"
     else:
-        target_dir = f"output/{today_str}"
+        target_dir = Path(__file__).resolve().parent / "output" / today_str
 
     os.makedirs(target_dir, exist_ok=True)
 
@@ -57,7 +72,7 @@ def main():
         if platform.system() == "Linux":
             data_target_dir = f"/var/www/html/data/{today_str}"
         else:
-            data_target_dir = f"data_archive/{today_str}"
+            data_target_dir = Path(__file__).resolve().parent / "data_archive" / today_str
         os.makedirs(data_target_dir, exist_ok=True)
 
         with ZipFile(zip_path) as zf:

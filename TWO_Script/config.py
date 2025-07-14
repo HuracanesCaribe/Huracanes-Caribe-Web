@@ -1,6 +1,10 @@
 # config.py – Centralized configuration for map styling and paths
 
 import pathlib
+from pathlib import Path
+
+# Resolve BASE_DIR relative to the actual config.py file location
+BASE_DIR = Path(__file__).resolve().parent
 
 # ——— COLORS ———————————————————————————————————————————
 COL = dict(
@@ -42,9 +46,9 @@ DPI     = 300
 # ——— FILESYSTEM PATHS ——————————————————————————————————————
 from pathlib import Path
 
-BASE = Path(__file__).resolve().parent.parent   # one level up to project root
-OUTDIR = BASE / "output"
-DATADIR = BASE / "data_archive"
+# Only the folders you actually use
+DATADIR = BASE_DIR / "data_archive"
+OUTDIR = BASE_DIR / "output"
 
 OUTDIR.mkdir(exist_ok=True)
 DATADIR.mkdir(exist_ok=True)

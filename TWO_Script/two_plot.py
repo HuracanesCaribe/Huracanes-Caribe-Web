@@ -7,8 +7,16 @@ import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 
 from two_data import get_two_gdfs, get_points, get_lines
-from two_map import setup_basemap, draw_two_polygons, draw_points_and_arrows, draw_legend, draw_timestamp, label_two_areas
 from config import COL, DEFAULT_EXTENT, FIGSIZE, DPI
+from two_map import (
+    setup_basemap,
+    draw_two_polygons,
+    draw_points,
+    draw_arrows,
+    draw_legend,
+    draw_timestamp,
+    label_two_combined
+)
 
 
 
@@ -44,9 +52,11 @@ def build_outlook(basin, label, prefix, outdir, timestamp, zip_path):
         else:
         # Only draw these if TWO areas are present
                 draw_two_polygons(ax, two)
-                label_two_areas(ax, two, points)
-                draw_points_and_arrows(ax, points, lines, two)
+                draw_points(ax, points)
+                label_two_combined(ax, two, points)
+                draw_arrows(ax, points, lines, two)
                 draw_legend(ax, basin, issue_dt)
+                draw_timestamp(ax, basin, issue_dt)
 
         draw_timestamp(ax, basin, issue_dt)
 

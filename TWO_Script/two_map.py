@@ -101,115 +101,243 @@ def draw_two_polygons(ax, two):
                     zorder=7
                 )
 
-def label_two_areas(ax, two, pts):
-    from shapely.geometry import Point
+# def label_two_areas(ax, two, pts):
+#     from shapely.geometry import Point
 
-    offset_directions = [(0, 4), (0, -4), (4, 0), (-4, 0)]  # N, S, E, W
+#     offset_directions = [(0, 4), (0, -4), (4, 0), (-4, 0)]  # N, S, E, W
+#     used_positions = []
+#     direction_idx = 0
+
+#     xmin, xmax, ymin, ymax = ax.get_extent(crs=ccrs.PlateCarree())
+
+#     for i, (_, row) in enumerate(two.iterrows(), start=1):
+#         geom = row.geometry
+#         cx, cy = geom.centroid.x, geom.centroid.y
+
+#         # Skip labeling if there's a disturbance already inside
+#         if any(geom.contains(pt.geometry) for _, pt in pts.iterrows()):
+#             continue
+
+#         area_num = row.get("AREA", "?")
+#         risk2 = row.get("PROB2TEXT", "Unknown").title()
+#         pct2 = row.get("PROB2DAY", "?")
+#         risk7 = row.get("PROB7TEXT", "Unknown").title()
+#         pct7 = row.get("PROB7DAY", "?")
+
+#         color = {
+#             "Low": COL["two2_low"],
+#             "Medium": COL["two2_med"],
+#             "High": COL["two2_high"]
+#         }.get(risk2, "white")
+
+#         label = f"AREA {area_num}\n{risk2}: {pct2} in 2 days\n{risk7}: {pct7} in 7 days"
+
+#         # Try different offsets and avoid collisions with other labels
+#         for attempt in range(len(offset_directions)):
+#             dx, dy = offset_directions[(direction_idx + attempt) % len(offset_directions)]
+#             tx, ty = cx + dx, cy + dy
+
+#             # check bounds
+#             if not (xmin + 1 < tx < xmax - 1 and ymin + 1 < ty < ymax - 1):
+#                 continue
+
+#             # check overlap with previously used positions (Euclidean distance)
+#             too_close = any((abs(tx - x) < 1.5 and abs(ty - y) < 1.5) for (x, y) in used_positions)
+#             if not too_close:
+#                 break
+
+#         used_positions.append((tx, ty))
+#         direction_idx += 1
+
+#         ax.text(
+#             tx, ty, label,
+#             transform=ccrs.PlateCarree(),
+#             color=color, weight="bold", fontsize=14,
+#             path_effects=[pe.Stroke(linewidth=4, foreground="black", alpha=0.9), pe.Normal()],
+#             zorder=10
+#         )
+
+
+
+   
+# def draw_points_and_arrows(ax, pts, lines, two):
+#     import shapely.geometry as sgeom
+
+#     # Store used label positions to avoid overlap
+#     used_positions = []
+#     def is_far_enough(x, y, min_dist=2.0):
+#         return all(np.hypot(x - px, y - py) > min_dist for px, py in used_positions)
+
+#     # Label offset directions (dx, dy)
+#     offset_directions = [(2, 2), (2, -2), (-2, -2), (-2, 2), (3, 0), (0, 3), (-3, 0), (0, -3)]
+#     direction_idx = 0
+
+#     # disturbances
+#     for _, row in pts.iterrows():
+#         lon, lat = row.geometry.x, row.geometry.y
+#         risk2 = (row.get("RISK2DAY") or "").title()
+#         color = {"Low": COL["two2_low"], "Medium": COL["two2_med"], "High": COL["two2_high"]}.get(risk2, "white")
+
+#         ax.scatter(lon, lat, marker="x", s=400, linewidths=14, color="black",
+#                    transform=ccrs.PlateCarree(), zorder=8)
+#         ax.scatter(lon, lat, marker="x", s=300, linewidths=8, color=color,
+#                    transform=ccrs.PlateCarree(), zorder=9)
+
+#         num = row.get("AREA", "?")
+#         prob2 = row.get("PROB2DAY", "").strip()
+#         prob7 = row.get("PROB7DAY", "").strip()
+
+#         label = f"Disturbance {num}\n({row.get('PROB2DAY', '')} in 2 Days \n {row.get('PROB7DAY', '')}) in 7 days"
+
+#         # Try multiple offset directions to find non-overlapping spot
+#         for _ in range(len(offset_directions)):
+#             dx, dy = offset_directions[direction_idx % len(offset_directions)]
+#             direction_idx += 1
+#             tx, ty = lon + dx, lat + dy
+#             if is_far_enough(tx, ty):
+#                 used_positions.append((tx, ty))
+#                 ax.text(tx, ty, label, transform=ccrs.PlateCarree(),
+#                         color=color, weight="bold", fontsize=16,
+#                         path_effects=[pe.Stroke(linewidth=5, foreground="black", alpha=0.9), pe.Normal()],
+#                         zorder=10)
+#                 break
+
+#     # arrows
+#     for _, row in lines.iterrows():
+#         geom = row.geometry
+#         if geom.geom_type != "LineString" or len(geom.coords) < 2:
+#             continue
+#         x0, y0 = geom.coords[0]
+#         x1, y1 = geom.coords[-1]
+
+#         nearest_disturbance = pts.distance(sgeom.Point(x0, y0)).idxmin()
+#         disturbance_pt = pts.loc[nearest_disturbance].geometry
+
+#         if not two.empty and two.contains(disturbance_pt).any():
+#             continue
+
+#         risk = (row.get("RISK2DAY") or "").title()
+#         arr_col = {
+#             "Low": COL.get("arrow_low", "yellow"),
+#             "Medium": COL.get("arrow_med", "orange"),
+#             "High": COL.get("arrow_high", "red")
+#         }.get(risk, "white")
+
+#         arrow = ax.annotate(
+#             "",
+#             xy=(x1, y1), xytext=(x0, y0),
+#             arrowprops=dict(
+#                 arrowstyle="simple,head_length=0.25,head_width=0.20,tail_width=0.0125",
+#                 color=arr_col,
+#                 linewidth=5,
+#                 mutation_scale=30,
+#                 shrinkA=1,
+#                 shrinkB=10,
+#                 joinstyle="miter",
+#             ),
+#             transform=ccrs.PlateCarree(),
+#             zorder=8
+#         )
+#         arrow.arrow_patch.set_path_effects([
+#             pe.Stroke(linewidth=7, foreground="black", alpha=0.8),
+#             pe.Normal()
+#         ])
+
+def label_two_combined(ax, two, pts):
+    from shapely.geometry import Point
+    import numpy as np
+
+    offset_directions = [(2, 2), (2, -2), (-2, -2), (-2, 2), (3, 0), (0, 3), (-3, 0), (0, -3)]
     used_positions = []
     direction_idx = 0
 
     xmin, xmax, ymin, ymax = ax.get_extent(crs=ccrs.PlateCarree())
 
-    for i, (_, row) in enumerate(two.iterrows(), start=1):
-        geom = row.geometry
-        cx, cy = geom.centroid.x, geom.centroid.y
-
-        # Skip labeling if there's a disturbance already inside
-        if any(geom.contains(pt.geometry) for _, pt in pts.iterrows()):
-            continue
-
-        area_num = row.get("AREA", "?")
-        risk2 = row.get("PROB2TEXT", "Unknown").title()
-        pct2 = row.get("PROB2DAY", "?")
-        risk7 = row.get("PROB7TEXT", "Unknown").title()
-        pct7 = row.get("PROB7DAY", "?")
-
-        color = {
-            "Low": COL["two2_low"],
-            "Medium": COL["two2_med"],
-            "High": COL["two2_high"]
-        }.get(risk2, "white")
-
-        label = f"AREA {area_num}\n{risk2}: {pct2} in 2 days\n{risk7}: {pct7} in 7 days"
-
-        # Try different offsets and avoid collisions with other labels
-        for attempt in range(len(offset_directions)):
-            dx, dy = offset_directions[(direction_idx + attempt) % len(offset_directions)]
-            tx, ty = cx + dx, cy + dy
-
-            # check bounds
-            if not (xmin + 1 < tx < xmax - 1 and ymin + 1 < ty < ymax - 1):
-                continue
-
-            # check overlap with previously used positions (Euclidean distance)
-            too_close = any((abs(tx - x) < 1.5 and abs(ty - y) < 1.5) for (x, y) in used_positions)
-            if not too_close:
-                break
-
-        used_positions.append((tx, ty))
-        direction_idx += 1
-
-        ax.text(
-            tx, ty, label,
-            transform=ccrs.PlateCarree(),
-            color=color, weight="bold", fontsize=14,
-            path_effects=[pe.Stroke(linewidth=4, foreground="black", alpha=0.9), pe.Normal()],
-            zorder=10
-        )
-
-
-
-   
-def draw_points_and_arrows(ax, pts, lines, two):
-    import shapely.geometry as sgeom
-
-    # Store used label positions to avoid overlap
-    used_positions = []
     def is_far_enough(x, y, min_dist=2.0):
         return all(np.hypot(x - px, y - py) > min_dist for px, py in used_positions)
 
-    # Label offset directions (dx, dy)
-    offset_directions = [(2, 2), (2, -2), (-2, -2), (-2, 2), (3, 0), (0, 3), (-3, 0), (0, -3)]
-    direction_idx = 0
+    for _, row in two.iterrows():
+        geom = row.geometry
+        cx, cy = geom.centroid.x, geom.centroid.y
+        area_num = row.get("AREA", "?")
 
-    # disturbances
-    for _, row in pts.iterrows():
-        lon, lat = row.geometry.x, row.geometry.y
-        risk2 = (row.get("RISK2DAY") or "").title()
-        color = {"Low": COL["two2_low"], "Medium": COL["two2_med"], "High": COL["two2_high"]}.get(risk2, "white")
+        # Check for disturbance point inside this polygon
+        area_num = int(str(row.get("AREA", "?")).lstrip("0") or -1)
+        disturbance_matches = pts[pts["AREA"].astype(str).str.lstrip("0") == str(area_num)]
 
-        ax.scatter(lon, lat, marker="x", s=400, linewidths=14, color="black",
-                   transform=ccrs.PlateCarree(), zorder=8)
-        ax.scatter(lon, lat, marker="x", s=300, linewidths=8, color=color,
-                   transform=ccrs.PlateCarree(), zorder=9)
+        disturbance = disturbance_matches.iloc[0] if not disturbance_matches.empty else None
+        if disturbance is None:
+            print(f"[WARN] AREA {area_num} has no disturbance match.")
+        if disturbance is not None:
+            print(f"[INFO] Disturbance found for AREA {area_num}")
+        else:
+            print(f"[INFO] Fallback label used for AREA {area_num}")
 
-        num = row.get("AREA", "?")
-        prob2 = row.get("PROB2DAY", "").strip()
-        prob7 = row.get("PROB7DAY", "").strip()
 
-        label = f"Disturbance {num}\n({row.get('PROB2DAY', '')} in 2 Days \n {row.get('PROB7DAY', '')}) in 7 days"
+        if disturbance is not None:
+            # ───── Label: Disturbance ─────
+            lon, lat = disturbance.geometry.x, disturbance.geometry.y
+            prob2 = (disturbance.get("PROB2DAY") or "").strip()
+            prob7 = (disturbance.get("PROB7DAY") or "").strip()
+            risk2 = (disturbance.get("RISK2DAY") or "").title()
+            risk7 = (disturbance.get("RISK7DAY") or "").title()
 
-        # Try multiple offset directions to find non-overlapping spot
+            label = f"DISTURBANCE {area_num}\n{risk2}: {prob2} in 2 Days \n{risk7}: {prob7} in 7 days"
+            color = {"Low": COL["two2_low"], "Medium": COL["two2_med"], "High": COL["two2_high"]}.get(risk2, "white")
+            x0, y0 = lon, lat
+            fontsize = 14
+            lw = 5
+
+            # 🔴 Draw X marker (outer black, inner colored)
+            ax.scatter(lon, lat,
+                    s=400, marker="x", linewidths=14, color="black",
+                    transform=ccrs.PlateCarree(), zorder=11)
+
+            ax.scatter(lon, lat,
+                    s=300, marker="x", linewidths=8, color=color,
+                    transform=ccrs.PlateCarree(), zorder=12)
+        else:
+            # ───── Label: AREA ─────
+            risk2 = row.get("PROB2TEXT", "Unknown").title()
+            pct2 = row.get("PROB2DAY", "?")
+            risk7 = row.get("PROB7TEXT", "Unknown").title()
+            pct7 = row.get("PROB7DAY", "?")
+
+            label = f"AREA {area_num}\n{risk2}: {pct2} in 2 days\n{risk7}: {pct7} in 7 days"
+            color = {"Low": COL["two2_low"], "Medium": COL["two2_med"], "High": COL["two2_high"]}.get(risk2, "white")
+            x0, y0 = cx, cy
+            fontsize = 14
+            lw = 4
+
+        # Try placing label
         for _ in range(len(offset_directions)):
             dx, dy = offset_directions[direction_idx % len(offset_directions)]
             direction_idx += 1
-            tx, ty = lon + dx, lat + dy
+            tx, ty = x0 + dx, y0 + dy
+
+            if not (xmin + 1 < tx < xmax - 1 and ymin + 1 < ty < ymax - 1):
+                continue
             if is_far_enough(tx, ty):
                 used_positions.append((tx, ty))
-                ax.text(tx, ty, label, transform=ccrs.PlateCarree(),
-                        color=color, weight="bold", fontsize=16,
-                        path_effects=[pe.Stroke(linewidth=5, foreground="black", alpha=0.9), pe.Normal()],
+                ax.text(tx, ty, label,
+                        transform=ccrs.PlateCarree(),
+                        color=color, weight="bold", fontsize=fontsize,
+                        path_effects=[pe.Stroke(linewidth=lw, foreground="black", alpha=0.9), pe.Normal()],
                         zorder=10)
                 break
 
-    # arrows
+def draw_arrows(ax, pts, lines, two):
+    import shapely.geometry as sgeom
+    from shapely.geometry import Point
+    from matplotlib.patches import FancyArrowPatch
+
     for _, row in lines.iterrows():
         geom = row.geometry
+
         if geom.geom_type != "LineString" or len(geom.coords) < 2:
             continue
-        x0, y0 = geom.coords[0]
-        x1, y1 = geom.coords[-1]
 
+        x0, y0 = geom.coords[0]
         nearest_disturbance = pts.distance(sgeom.Point(x0, y0)).idxmin()
         disturbance_pt = pts.loc[nearest_disturbance].geometry
 
@@ -223,26 +351,57 @@ def draw_points_and_arrows(ax, pts, lines, two):
             "High": COL.get("arrow_high", "red")
         }.get(risk, "white")
 
-        arrow = ax.annotate(
-            "",
-            xy=(x1, y1), xytext=(x0, y0),
-            arrowprops=dict(
-                arrowstyle="simple,head_length=0.25,head_width=0.20,tail_width=0.0125",
-                color=arr_col,
-                linewidth=5,
-                mutation_scale=30,
-                shrinkA=1,
-                shrinkB=10,
-                joinstyle="miter",
-            ),
+        # 1️⃣ Draw full trajectory
+        ax.plot(*geom.xy,
+                color=arr_col, linewidth=3.5,
+                path_effects=[pe.Stroke(linewidth=5.5, foreground="black", alpha=1), pe.Normal()],
+                transform=ccrs.PlateCarree(),
+                zorder=10)
+
+        # 2️⃣ Overshoot arrow
+        x_last, y_last = geom.coords[-1]
+        x_prev, y_prev = geom.coords[-2]
+
+        # Direction vector (unit)
+        dx = x_last - x_prev
+        dy = y_last - y_prev
+        length = (dx**2 + dy**2)**0.5
+        if length == 0:
+            continue  # avoid zero division
+
+        ux, uy = dx / length, dy / length
+
+        # Extend the arrow 20% beyond the final segment length
+        overshoot_length = 1  # degrees — adjust as needed
+        x_tip = x_last + ux * overshoot_length
+        y_tip = y_last + uy * overshoot_length
+
+        arrow = FancyArrowPatch(
+            (x_last, y_last), (x_tip, y_tip),
+            arrowstyle="simple,head_length=10,head_width=8,tail_width=0.5",
+            color=arr_col,
             transform=ccrs.PlateCarree(),
-            zorder=8
+            zorder=10,
+            linewidth=0
         )
-        arrow.arrow_patch.set_path_effects([
-            pe.Stroke(linewidth=7, foreground="black", alpha=0.8),
+        arrow.set_path_effects([
+            pe.Stroke(linewidth=2, foreground="black"),
             pe.Normal()
         ])
+        ax.add_patch(arrow)
 
+def draw_points(ax, pts):
+    for _, row in pts.iterrows():
+        lon, lat = row.geometry.x, row.geometry.y
+        risk2 = (row.get("RISK2DAY") or "").title()
+        color = {"Low": COL["two2_low"], "Medium": COL["two2_med"], "High": COL["two2_high"]}.get(risk2, "white")
+
+        # Outer black X
+        ax.scatter(lon, lat, marker="x", s=400, linewidths=14, color="black",
+                   transform=ccrs.PlateCarree(), zorder=8)
+        # Colored X on top
+        ax.scatter(lon, lat, marker="x", s=300, linewidths=8, color=color,
+                   transform=ccrs.PlateCarree(), zorder=11)
 
 def draw_legend(ax, basin, issue_dt):
     handles = [
