@@ -427,15 +427,11 @@ def draw_arrows(ax, pts, lines, two):
         ax.add_patch(arrow)
 
 
-def draw_points(basin_tag, zip_path):
+def get_points(basin_tag, zip_path):
  
     # Read points shapefile
     with zipfile.ZipFile(zip_path) as z:
-        shp_list = [n for n in z.namelist() if n.endswith("_pts.shp")]
-        if not shp_list:
-            raise ValueError("No *_pts.shp file found in GTWO zip")
-
-        shp_name = shp_list[0]
+        shp_name = [n for n in z.namelist() if n.endswith("_pts.shp")][0]
         with z.open(shp_name) as shp, \
              z.open(shp_name.replace(".shp", ".dbf")) as dbf, \
              z.open(shp_name.replace(".shp", ".shx")) as shx:
