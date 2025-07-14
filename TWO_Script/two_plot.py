@@ -12,6 +12,7 @@ from two_map import (
     setup_basemap,
     draw_two_polygons,
     draw_points,
+    load_points_from_zip,
     draw_arrows,
     draw_legend,
     draw_timestamp,
@@ -29,8 +30,7 @@ def build_outlook(basin, label, prefix, outdir, timestamp, zip_path):
         print(f"DEBUG: type(two) = {type(two)}")
         print(f"DEBUG: type(zip_path) = {type(zip_path)}")
         issue_dt = timestamp
-        points = draw_points_data(tag, zip_path)
-        plot_points(ax, points)
+        points = load_points_from_zip(tag, zip_path)
         lines  = get_lines(tag, zip_path)
         fig = plt.figure(figsize=FIGSIZE)
         ax  = plt.axes(projection=ccrs.PlateCarree())

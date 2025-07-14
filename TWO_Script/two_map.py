@@ -427,7 +427,40 @@ def draw_arrows(ax, pts, lines, two):
         ax.add_patch(arrow)
 
 
-def draw_points(basin_tag, zip_path):
+def draw_points(ax, points):
+    """Plot disturbance points on the map."""
+    for _, row in points.iterrows():
+        lon, lat = row.geometry.x, row.geometry.y
+        risk = (row.get("RISK2DAY") or "").title()
+        color = {
+            "Low": COL["two2_low"],
+            "Medium": COL["two2_med"],
+            "High": COL["two2_high"],
+        }.get(risk, "white")
+
+        ax.scatter(
+            lon,
+            lat,
+            s=400,
+            marker="x",
+            linewidths=14,
+            color="black",
+            transform=ccrs.PlateCarree(),
+            zorder=11,
+        )
+        ax.scatter(
+            lon,
+            lat,
+            s=300,
+            marker="x",
+            linewidths=8,
+            color=color,
+            transform=ccrs.PlateCarree(),
+            zorder=12,
+        )
+
+
+def load_points_from_zip(basin_tag, zip_path):
  
     # Read points shapefile
     with zipfile.ZipFile(zip_path) as z:
@@ -454,6 +487,8 @@ def draw_points(basin_tag, zip_path):
             return None
 
     gdf["INVEST_CODE"] = gdf["AREA"].apply(infer_invest_code)
+
+    print(f"[DEBUG] Loaded {len(gdf)} points")
 
     return gdf
 
