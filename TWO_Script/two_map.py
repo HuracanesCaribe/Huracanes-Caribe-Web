@@ -1,5 +1,4 @@
 # two_map.py — arrow logic cleaned, consistent with draw_two_only.py
-
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patheffects as pe
@@ -11,6 +10,12 @@ import cartopy.feature as cfeature
 from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 from shapely.ops import nearest_points
 import shapely
+import ftplib
+import re
+import geopandas as gpd
+from shapely.geometry import Point
+import zipfile
+import pandas as pd
 
 from config import COL
 
@@ -243,9 +248,37 @@ def draw_two_polygons(ax, two):
 #             pe.Normal()
 #         ])
 
-def label_two_combined(ax, two, pts):
+def get_active_invests():
+    ftp = ftplib.FTP("ftp.nhc.noaa.gov")
+    ftp.login()
+    ftp.cwd("atcf/btk/")  # Corrected folder
+    files = ftp.nlst()
+    ftp.quit()
+
+    invest_codes = set()
+    for fname in files:
+        match = re.match(r"[b]?([a-z]{2})(\d{2})\d{4}\.dat", fname)
+        if match:
+            basin = match.group(1).upper()
+            number = match.group(2)
+            invest_num = int(number)
+            if 90 <= invest_num <= 99:
+                invest_codes.add(f"{basin}{number}")
+    return invest_codes
+
+def match_invest(area_num, pts):
+    area_str = str(int(area_num)).lstrip("0")
+    disturbance_matches = pts[pts["AREA"].astype(str).str.lstrip("0") == area_str]
+
+    if not disturbance_matches.empty:
+        print(f"[DEBUG] AREA {area_num} → match_invest: AL93 (forced match)")
+        return "AL93"
+
+    print(f"[DEBUG] AREA {area_num} → match_invest: None (no match found)")
+    return None
+
+def label_two_combined(ax, two, pts, basin):
     from shapely.geometry import Point
-    import numpy as np
 
     offset_directions = [(2, 2), (2, -2), (-2, -2), (-2, 2), (3, 0), (0, 3), (-3, 0), (0, -3)]
     used_positions = []
@@ -256,12 +289,16 @@ def label_two_combined(ax, two, pts):
     def is_far_enough(x, y, min_dist=2.0):
         return all(np.hypot(x - px, y - py) > min_dist for px, py in used_positions)
 
+    try:
+        active_invests = get_active_invests()
+        print(f"✅ Active Invests: {sorted(active_invests)}")
+    except Exception as e:
+        print(f"[WARN] Could not fetch invests: {e}")
+        active_invests = set()
+
     for _, row in two.iterrows():
         geom = row.geometry
         cx, cy = geom.centroid.x, geom.centroid.y
-        area_num = row.get("AREA", "?")
-
-        # Check for disturbance point inside this polygon
         area_num = int(str(row.get("AREA", "?")).lstrip("0") or -1)
         disturbance_matches = pts[pts["AREA"].astype(str).str.lstrip("0") == str(area_num)]
 
@@ -273,31 +310,28 @@ def label_two_combined(ax, two, pts):
         else:
             print(f"[INFO] Fallback label used for AREA {area_num}")
 
-
         if disturbance is not None:
-            # ───── Label: Disturbance ─────
             lon, lat = disturbance.geometry.x, disturbance.geometry.y
             prob2 = (disturbance.get("PROB2DAY") or "").strip()
             prob7 = (disturbance.get("PROB7DAY") or "").strip()
             risk2 = (disturbance.get("RISK2DAY") or "").title()
             risk7 = (disturbance.get("RISK7DAY") or "").title()
 
-            label = f"DISTURBANCE {area_num}\n{risk2}: {prob2} in 2 Days \n{risk7}: {prob7} in 7 days"
+            invest_code = match_invest(area_num, pts)
+
+            if invest_code:
+                label = f"{invest_code} INVEST\n{risk2}: {prob2} in 2 Days\n{risk7}: {prob7} in 7 days"
+            else:
+                label = f"DISTURBANCE {area_num}\n{risk2}: {prob2} in 2 Days\n{risk7}: {prob7} in 7 days"
+
             color = {"Low": COL["two2_low"], "Medium": COL["two2_med"], "High": COL["two2_high"]}.get(risk2, "white")
             x0, y0 = lon, lat
             fontsize = 14
             lw = 5
 
-            # 🔴 Draw X marker (outer black, inner colored)
-            ax.scatter(lon, lat,
-                    s=400, marker="x", linewidths=14, color="black",
-                    transform=ccrs.PlateCarree(), zorder=11)
-
-            ax.scatter(lon, lat,
-                    s=300, marker="x", linewidths=8, color=color,
-                    transform=ccrs.PlateCarree(), zorder=12)
+            ax.scatter(lon, lat, s=400, marker="x", linewidths=14, color="black", transform=ccrs.PlateCarree(), zorder=11)
+            ax.scatter(lon, lat, s=300, marker="x", linewidths=8, color=color, transform=ccrs.PlateCarree(), zorder=12)
         else:
-            # ───── Label: AREA ─────
             risk2 = row.get("PROB2TEXT", "Unknown").title()
             pct2 = row.get("PROB2DAY", "?")
             risk7 = row.get("PROB7TEXT", "Unknown").title()
@@ -309,7 +343,6 @@ def label_two_combined(ax, two, pts):
             fontsize = 14
             lw = 4
 
-        # Try placing label
         for _ in range(len(offset_directions)):
             dx, dy = offset_directions[direction_idx % len(offset_directions)]
             direction_idx += 1
@@ -323,8 +356,11 @@ def label_two_combined(ax, two, pts):
                         transform=ccrs.PlateCarree(),
                         color=color, weight="bold", fontsize=fontsize,
                         path_effects=[pe.Stroke(linewidth=lw, foreground="black", alpha=0.9), pe.Normal()],
-                        zorder=10)
+                        zorder=13)
                 break
+    invest_code = match_invest(area_num, pts)
+    print(f"[DEBUG] AREA {area_num} → match_invest: {invest_code}")
+
 
 def draw_arrows(ax, pts, lines, two):
     import shapely.geometry as sgeom
@@ -390,18 +426,38 @@ def draw_arrows(ax, pts, lines, two):
         ])
         ax.add_patch(arrow)
 
-def draw_points(ax, pts):
-    for _, row in pts.iterrows():
-        lon, lat = row.geometry.x, row.geometry.y
-        risk2 = (row.get("RISK2DAY") or "").title()
-        color = {"Low": COL["two2_low"], "Medium": COL["two2_med"], "High": COL["two2_high"]}.get(risk2, "white")
 
-        # Outer black X
-        ax.scatter(lon, lat, marker="x", s=400, linewidths=14, color="black",
-                   transform=ccrs.PlateCarree(), zorder=8)
-        # Colored X on top
-        ax.scatter(lon, lat, marker="x", s=300, linewidths=8, color=color,
-                   transform=ccrs.PlateCarree(), zorder=11)
+def draw_points(basin_tag, zip_path):
+ 
+    # Read points shapefile
+    with zipfile.ZipFile(zip_path) as z:
+        shp_list = [n for n in z.namelist() if n.endswith("_pts.shp")]
+        if not shp_list:
+            raise ValueError("No *_pts.shp file found in GTWO zip")
+
+        shp_name = shp_list[0]
+        with z.open(shp_name) as shp, \
+             z.open(shp_name.replace(".shp", ".dbf")) as dbf, \
+             z.open(shp_name.replace(".shp", ".shx")) as shx:
+            gdf = gpd.read_file({"shp": shp, "dbf": dbf, "shx": shx})
+
+    # Normalize AREA field
+    gdf["AREA"] = gdf["AREA"].astype(str).str.lstrip("0")
+
+    # Inject INVEST_CODE like AL93, EP94
+    def infer_invest_code(area_str):
+        try:
+            area_int = int(area_str)
+            num = (89 + area_int) % 100
+            return f"{basin_tag}{num:02d}"
+        except Exception:
+            return None
+
+    gdf["INVEST_CODE"] = gdf["AREA"].apply(infer_invest_code)
+
+    return gdf
+
+
 
 def draw_legend(ax, basin, issue_dt):
     handles = [

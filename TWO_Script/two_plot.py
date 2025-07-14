@@ -26,10 +26,12 @@ def build_outlook(basin, label, prefix, outdir, timestamp, zip_path):
         tag = "Atlantic" if basin == "AL" else "Pacific"
         
         two = get_two_gdfs(tag, zip_path)
+        print(f"DEBUG: type(two) = {type(two)}")
+        print(f"DEBUG: type(zip_path) = {type(zip_path)}")
         issue_dt = timestamp
-        points = get_points(tag, zip_path)
+        points = draw_points_data(tag, zip_path)
+        plot_points(ax, points)
         lines  = get_lines(tag, zip_path)
-
         fig = plt.figure(figsize=FIGSIZE)
         ax  = plt.axes(projection=ccrs.PlateCarree())
         ax.set_extent(DEFAULT_EXTENT[basin])
@@ -53,7 +55,14 @@ def build_outlook(basin, label, prefix, outdir, timestamp, zip_path):
         # Only draw these if TWO areas are present
                 draw_two_polygons(ax, two)
                 draw_points(ax, points)
-                label_two_combined(ax, two, points)
+                label_two_combined(ax, two, points, basin)
+
+                print("\n🔍 DEBUG: AREA values in `two`:")
+                print(sorted(set(two["AREA"].astype(str).str.lstrip("0"))))
+
+                print("\n🔍 DEBUG: AREA values in `pts`:")
+                print(sorted(set(points["AREA"].astype(str).str.lstrip("0"))))
+
                 draw_arrows(ax, points, lines, two)
                 draw_legend(ax, basin, issue_dt)
                 draw_timestamp(ax, basin, issue_dt)
