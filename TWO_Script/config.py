@@ -19,9 +19,9 @@ COL = dict(
     two2_med  = "#ffa200",
     two2_high = "#ff0000",
 
-    two7_low  = "#fff66d",
-    two7_med  = "#ffa200",
-    two7_high = "#ff0000",
+    two7_low  = "yellow",
+    two7_med  = "#ff7700",
+    two7_high = "#dd0101",
 
     X_low     = "#fff66d",
     X_med     = "#ffa200",

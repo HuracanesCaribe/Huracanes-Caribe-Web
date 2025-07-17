@@ -92,10 +92,11 @@ def draw_two_polygons(ax, two):
         for level in ["Low", "Medium", "High"]:
             subset = two[two["PROB7TEXT"] == level]
             if not subset.empty:
+                # Use the same color as the label for the edgecolor
                 subset.plot(
                     ax=ax,
                     facecolor="none",
-                    edgecolor="yellow",
+                    edgecolor=cmap7[level],  # Use 2-day color for label/hatch
                     hatch="////",
                     linewidth=3,
                     zorder=7

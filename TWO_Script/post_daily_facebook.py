@@ -22,13 +22,13 @@ if "huracanes-caribe-vm" in HOSTNAME:
     # Server setup
     BASE_DIR = Path("/home/ubuntu/Huracanes-Caribe-Web")
     OUTPUT_DIR = Path("/var/www/html/output")
-    DATA_DIR = BASE_DIR / "data_archive"  # 👈 Add this too
+    DATA_DIR = BASE_DIR / "TWO_Script" / "data_archive"  # 👈 Add this too
     ENV_PATH = BASE_DIR / "TWO_Script" / ".envs" / ".env"
 else:
     # Local Mac setup
     BASE_DIR = Path("/Users/tejedawx/Projects/HuracanesCaribe")
-    OUTPUT_DIR = BASE_DIR / "output"
-    DATA_DIR = BASE_DIR / "data_archive"  # 👈 Add this too
+    OUTPUT_DIR = BASE_DIR /  "TWO_Script" / "output"
+    DATA_DIR = BASE_DIR / "TWO_Script" /"data_archive"  # 👈 Add this too
     ENV_PATH = BASE_DIR / "TWO_Script" / ".envs" / ".env"
 
 # --- Load environment variables ---
@@ -88,46 +88,33 @@ def generate_facebook_caption_with_gpt(rtf_text: str, basin: str, lang: str = "e
 
     if lang == "es":
         prompt = f"""
-Eres un comunicador meteorológico de confianza para redes sociales como Facebook y X. Tu tarea es generar una publicación clara, cálida y profesional en español caribeño, basada en el siguiente resumen oficial del Centro Nacional de Huracanes (NHC) sobre el panorama de ciclones tropicales en el {basin}.
-
-Normas:
-- Añade la fecha del pronóstico en cualquier posicion del primer parrafo {today_str_es},"
-- Escribe entre 60 y 100 palabras (preferible 60–70, máximo 150).
-- Observa el mapa y el texto: si dice “No tropical cyclones expected”, no digas lo contrario.
-- Usa entre 1 y 3 párrafos, según la longitud del texto, y añade un salto de línea entre párrafos.
-- Usa un tono amigable y creíble, que se sienta local y humano.
-- No uses saludos ni títulos exagerados, formales o cringy (ej: “¡Hola amigos del Caribe!”).
-- Usa español neutro y correcto. 
-- No uses titulos separados de la primera oracion.
-- Evita el uso de mayúsculas excesivas o lenguaje técnico, salvo que sea necesario.
-- Resalta si hay sistemas con probabilidad de formación (baja, media, alta).
-- Usa emojis apropiados 🌧️🌀⚠️ para visibilidad y conexión emocional.
-- Incluye principios sutiles de influencia (urgencia, autoridad, prueba social) sin que se noten.
-- Cierra con una frase simple como: “Más información en nuestra página web Huracanes_Caribe 🌐” (sin enlace directo).
-- Evita lenguaje técnico o mayúsculas, salvo que sea necesario.
+**SIEMPRE LEA ESTA INSTRUCCIÓN ANTES DE PUBLICAR**
+Eres un comunicador meteorológico de confianza para redes sociales como Facebook y X. Tu tarea es generar una publicación clara, cálida y profesional en español, basada en el siguiente resumen oficial del Centro Nacional de Huracanes (NHC) sobre el panorama de ciclones tropicales en el {basin}.
+Responde en español neutro, claro y profesional, fácil de entender para el público general, con un tono cálido y tranquilizador, similar al de un comunicador meteorológico de confianza.
+Prioriza la claridad y el compromiso comunitario al editar o crear publicaciones para Facebook y otras redes sociales. Mantén los mensajes concisos, idealmente entre 40 y 100 palabras (preferiblemente entre 60-70, máximo 150), y adaptados a las audiencias de habla hispana en el Caribe.
+Para Twitter (X), mantén el texto entre 100 y 300 caracteres y no más de 600 caracteres.     
+Al reescribir textos, asegúrate de que la gramática y la ortografía sean correctas, y destaca los mensajes críticos de preparación y prevención ante el clima.  
+Incorpora sutilmente principios de influencia conductual (como prueba social, urgencia y autoridad confiable) inspirados en el Manual de Operaciones de Comportamiento de Chase Hughes, sin que sean obvios. Siempre incluye suficientes emojis apropiados para mejorar el compromiso emocional y la visibilidad.
+No hagas títulos. Haz todo en 1-3 párrafos con un salto de línea entre párrafos. Si necesitas usar un título, mantenlo dentro del texto, no como título.
+Si necesitas usar una fecha, usa la fecha actual en la zona horaria local (America/Santo_Domingo) en el formato "dd de MMMM" para español y "MMMM dd" para inglés.
+trata de no usar la palabra "comunidad caribeña" o "weather prediction center", usa simplemente la palabra "comunidad" en su lugar.
 
 Resumen GTWO (limpio):
 {rtf_text_cleaned}
 """
     else:
         prompt = f"""
+**ALWAYS READ THIS PROMPT BEFORE POSTING**
 You are a trusted weather communicator for social media audiences in the Caribbean. Your task is to generate a warm, clear, and professional Facebook post in **English** summarizing the following official tropical weather outlook from the National Hurricane Center (NHC) for the {basin} basin.
-
-Guidelines:
-- Add the date of the outlook in any position of the first paragraph {today_str_en},"
-- Write between 60 and 100 words (ideally 60–70, max 150).
-- Observe both the map and the text. If it says “No tropical cyclones expected,” do **not** say otherwise.
-- Use 1–3 paragraphs depending on the length of the outlook and use an extra line break between paragraphs.
-- Use a friendly, credible tone that feels local and human.
-- Avoid overly formal, exaggerated, or cringy greetings (e.g., “Hello Caribbean friends!”).
-- Use neutral, natural English.
-- Do not use titles separate from the first sentence.
-- Avoid ALL CAPS or technical language unless necessary.
-- Highlight any systems with low, medium, or high formation chances.
-- Use appropriate emojis 🌧️🌀⚠️ for visibility and emotional connection.
-- Subtly include behavioral influence (urgency, authority, social proof) without making it obvious.
-- End with: “More at our website Huracanes_Caribe 🌐” (no clickable link).
-- Do not contradict clear NHC statements about no expected cyclone formation.
+Respond in neutral, clear, professional English that is easy for a general audience to understand, with a warm and reassuring tone similar to a trusted weather communicator. 
+Prioritize clarity and community engagement when editing or creating posts for Facebook and other social networks. Keep messages concise, ideally between 40 and 100 words (preferably between 60-70, max 150), and adapted to english-speaking audiences. 
+For twitter (X), keep the text between 100-300 characters and no more than 600 character.
+When rewriting texts, ensure correct grammar and orthography, and highlight critical weather preparedness and prevention messages. 
+Subtly incorporate behavioral influence principles (such as social proof, urgency, and trusted authority) inspired by the Behavior Ops Manual by Chase Hughes, without making them obvious. Always include enough appropriate emojis to improve emotional engagement and visibility. 
+If a question is outside the scope of text editing, community messaging, or hurricane-related public communication, clearly state that this project does not cover that topic.
+Don’t make titles at all. Make everything in between 1-3 paragraphs with a line break between paragraphs. if you need to use a title keep it inside the text, not as a title.
+if you need to use a date, use the current date in the local timezone (America/Santo_Domingo) in the format "dd de MMMM" for Spanish and "MMMM dd" for English.
+try not to use the work caribbean comunity or weather prediction center, use the word "community" instead.
 
 Cleaned NHC outlook:
 {rtf_text_cleaned}
