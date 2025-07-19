@@ -327,11 +327,76 @@ def label_two_combined(ax, two, pts):
                         zorder=10)
                 break
 
-def draw_arrows(ax, pts, lines, two):
-    import shapely.geometry as sgeom
-    from shapely.geometry import Point
-    from matplotlib.patches import FancyArrowPatch
+# def draw_arrows(ax, pts, lines, two):
+#     import shapely.geometry as sgeom
+#     from shapely.geometry import Point
+#     from matplotlib.patches import FancyArrowPatch
 
+#     for _, row in lines.iterrows():
+#         geom = row.geometry
+
+#         if geom.geom_type != "LineString" or len(geom.coords) < 2:
+#             continue
+
+#         x0, y0 = geom.coords[0]
+#         nearest_disturbance = pts.distance(sgeom.Point(x0, y0)).idxmin()
+#         disturbance_pt = pts.loc[nearest_disturbance].geometry
+
+#         if not two.empty and two.contains(disturbance_pt).any():
+#             continue
+
+#         risk = (row.get("RISK2DAY") or "").title()
+#         arr_col = {
+#             "Low": COL.get("arrow_low", "yellow"),
+#             "Medium": COL.get("arrow_med", "orange"),
+#             "High": COL.get("arrow_high", "red")
+#         }.get(risk, "white")
+
+#         # 1️⃣ Draw full trajectory
+#         ax.plot(*geom.xy,
+#                 color=arr_col, linewidth=3.5,
+#                 path_effects=[pe.Stroke(linewidth=5.5, foreground="black", alpha=1), pe.Normal()],
+#                 transform=ccrs.PlateCarree(),
+#                 zorder=10)
+
+#         # 2️⃣ Overshoot arrow
+#         x_last, y_last = geom.coords[-1]
+#         x_prev, y_prev = geom.coords[-2]
+
+#         # Direction vector (unit)
+#         dx = x_last - x_prev
+#         dy = y_last - y_prev
+#         length = (dx**2 + dy**2)**0.5
+#         if length == 0:
+#             continue  # avoid zero division
+
+#         ux, uy = dx / length, dy / length
+
+#         # Extend the arrow 20% beyond the final segment length
+#         overshoot_length = 1  # degrees — adjust as needed
+#         x_tip = x_last + ux * overshoot_length
+#         y_tip = y_last + uy * overshoot_length
+
+#         arrow = FancyArrowPatch(
+#             (x_last, y_last), (x_tip, y_tip),
+#             arrowstyle="simple,head_length=10,head_width=8,tail_width=0.5",
+#             color=arr_col,
+#             transform=ccrs.PlateCarree(),
+#             zorder=10,
+#             linewidth=0
+#         )
+#         arrow.set_path_effects([
+#             pe.Stroke(linewidth=2, foreground="black"),
+#             pe.Normal()
+#         ])
+#         ax.add_patch(arrow)
+from shapely.geometry import Point as ShapelyPoint
+from matplotlib.patches import Polygon
+import numpy as np
+import matplotlib.patheffects as pe
+import cartopy.crs as ccrs
+
+def draw_arrows(ax, pts, lines, two, basin):
     for _, row in lines.iterrows():
         geom = row.geometry
 
@@ -339,7 +404,7 @@ def draw_arrows(ax, pts, lines, two):
             continue
 
         x0, y0 = geom.coords[0]
-        nearest_disturbance = pts.distance(sgeom.Point(x0, y0)).idxmin()
+        nearest_disturbance = pts.distance(ShapelyPoint(x0, y0)).idxmin()
         disturbance_pt = pts.loc[nearest_disturbance].geometry
 
         if not two.empty and two.contains(disturbance_pt).any():
@@ -352,44 +417,47 @@ def draw_arrows(ax, pts, lines, two):
             "High": COL.get("arrow_high", "red")
         }.get(risk, "white")
 
-        # 1️⃣ Draw full trajectory
+        # 1️⃣ Draw full trajectory line
         ax.plot(*geom.xy,
                 color=arr_col, linewidth=3.5,
-                path_effects=[pe.Stroke(linewidth=5.5, foreground="black", alpha=1), pe.Normal()],
-                transform=ccrs.PlateCarree(),
-                zorder=10)
+                path_effects=[pe.Stroke(linewidth=5.5, foreground="black"), pe.Normal()],
+                transform=ccrs.PlateCarree(), zorder=10)
 
-        # 2️⃣ Overshoot arrow
+        # 2️⃣ Construct custom triangle arrowhead
         x_last, y_last = geom.coords[-1]
         x_prev, y_prev = geom.coords[-2]
+        dx, dy = x_last - x_prev, y_last - y_prev
+        mag = np.hypot(dx, dy)
+        if mag == 0:
+            continue
 
-        # Direction vector (unit)
-        dx = x_last - x_prev
-        dy = y_last - y_prev
-        length = (dx**2 + dy**2)**0.5
-        if length == 0:
-            continue  # avoid zero division
+        # Unit vector
+        ux, uy = dx / mag, dy / mag
 
-        ux, uy = dx / length, dy / length
+        # Scale overshoot by latitude to account for projection distortion
+        lat_scale = np.cos(np.radians(y_last))
+        arrow_len = 0.6 * lat_scale  # degrees forward
+        arrow_width = 0.3 * lat_scale  # degrees wide
 
-        # Extend the arrow 20% beyond the final segment length
-        overshoot_length = 1  # degrees — adjust as needed
-        x_tip = x_last + ux * overshoot_length
-        y_tip = y_last + uy * overshoot_length
+        # Tip of arrow
+        tip = np.array([x_last + ux * arrow_len, y_last + uy * arrow_len])
+        base_center = np.array([x_last, y_last])
+        perp = np.array([-uy, ux])
 
-        arrow = FancyArrowPatch(
-            (x_last, y_last), (x_tip, y_tip),
-            arrowstyle="simple,head_length=10,head_width=8,tail_width=0.5",
-            color=arr_col,
-            transform=ccrs.PlateCarree(),
-            zorder=10,
-            linewidth=0
-        )
-        arrow.set_path_effects([
+        left = base_center + perp * arrow_width
+        right = base_center - perp * arrow_width
+
+        triangle = np.array([tip, left, right])
+
+        # Draw filled arrowhead triangle
+        patch = Polygon(triangle, closed=True, color=arr_col, zorder=11,
+                        transform=ccrs.PlateCarree())
+        patch.set_path_effects([
             pe.Stroke(linewidth=2, foreground="black"),
             pe.Normal()
         ])
-        ax.add_patch(arrow)
+        ax.add_patch(patch)
+
 
 def draw_points(ax, pts):
     for _, row in pts.iterrows():
@@ -404,33 +472,77 @@ def draw_points(ax, pts):
         ax.scatter(lon, lat, marker="x", s=300, linewidths=8, color=color,
                    transform=ccrs.PlateCarree(), zorder=11)
 
-def draw_legend(ax, basin, issue_dt):
-    handles = [
-        Patch(facecolor=COL["two2_low"], edgecolor="black"),
-        Patch(facecolor=COL["two2_med"], edgecolor="black"),
-        Patch(facecolor=COL["two2_high"], edgecolor="black"),
-        Patch(facecolor="none", edgecolor='Yellow', hatch="////", linewidth=1.5),
-        Patch(facecolor="none", edgecolor=COL["two7_med"], hatch="////", linewidth=1.5),
-        Patch(facecolor="none", edgecolor=COL["two7_high"], hatch="////", linewidth=1.5),
-        Line2D([0], [0], linestyle="-", color="white", lw=2,
-               marker=">", markersize=8,
-               path_effects=[pe.Stroke(linewidth=4, foreground="black"), pe.Normal()]),
-        Line2D([0], [0], marker="x", linestyle="None", markersize=12,
-               markeredgewidth=4, color="white",
-               path_effects=[pe.Stroke(linewidth=8, foreground="black"), pe.Normal()])
-    ]
-    labels = [
-        "2-Day Low", "2-Day Medium", "2-Day High",
-        "7-Day Low", "7-Day Medium", "7-Day High",
-        "Movement", "Current Disturbance"
-    ]
-    leg = ax.legend(handles, labels, loc="lower left",
-                    title=r"$\bf{Genesis\ Probabilities}$",
-                    fontsize=10, title_fontsize=16)
-    leg.set_zorder(1000)  # 🔥 Bring legend to the top
-    for text in leg.get_texts():
-        text.set_fontsize(12)
+def draw_legend(ax, basin, issue_dt, two=None, pts=None, lines=None):
+    """
+    Draws two horizontal legends side by side below the canvas: genesis probabilities and disturbance types.
+    NOTE: You may need to call plt.subplots_adjust(bottom=0.22) or similar in your plotting script to ensure the legends are visible.
+    """
+    from matplotlib.patches import Patch
+    from matplotlib.lines import Line2D
+    import matplotlib.patheffects as pe
 
+    # Genesis Probabilities
+    prob_handles = [
+        Patch(facecolor="none", edgecolor="black", linewidth=1.2, label="2-Day Risk"),
+        Patch(facecolor="none", edgecolor="k", hatch="////", linewidth=1.5, label="7-Day Risk"),
+        Patch(facecolor=COL["two2_low"], edgecolor="black", linewidth=1.2, label="Low Chance"),
+        Patch(facecolor=COL["two2_med"], edgecolor="black", linewidth=1.2, label="Medium Chance"),
+        Patch(facecolor=COL["two2_high"], edgecolor="black", linewidth=1.2, label="High Chance"),
+        Line2D([0], [0], marker=">", linestyle="-", markersize=12, color="black", label="Movement",
+           markerfacecolor="white", markeredgecolor="black", markeredgewidth=2,
+           path_effects=[pe.Stroke(linewidth=3, foreground="black"), pe.Normal()]),
+    ]
+    prob_labels = [h.get_label() for h in prob_handles]
+
+    # Disturbance Types
+    dist_handles = [
+        Line2D([0], [0], marker="$I$", linestyle="None", markersize=14, color="deepskyblue", label="Invest", markerfacecolor="white", markeredgecolor="deepskyblue", markeredgewidth=2),
+        Line2D([0], [0], marker="$P$", linestyle="None", markersize=14, color="purple", label="PTC", markerfacecolor="white", markeredgecolor="purple", markeredgewidth=2),
+        Line2D([0], [0], marker="$D$", linestyle="None", markersize=14, color="gray", label="Depression", markerfacecolor="white", markeredgecolor="gray", markeredgewidth=2),
+        Line2D([0], [0], marker="$S$", linestyle="None", markersize=14, color="orange", label="Storm", markerfacecolor="white", markeredgecolor="orange", markeredgewidth=2),
+        Line2D([0], [0], marker="$H$", linestyle="None", markersize=14, color="red", label="Hurricane", markerfacecolor="white", markeredgecolor="red", markeredgewidth=2),
+        Line2D([0], [0], marker="$M$", linestyle="None", markersize=14, color="darkred", label="Major Hurricane", markerfacecolor="white", markeredgecolor="darkred", markeredgewidth=2),
+        Line2D([0], [0], marker="$R$", linestyle="None", markersize=14, color="brown", label="Post/Remnant", markerfacecolor="white", markeredgecolor="brown", markeredgewidth=2),
+        Line2D([0], [0], marker="X", linestyle="None", markersize=14, color="black", label="Disturbance", markerfacecolor="white", markeredgecolor="black", markeredgewidth=2),
+            ]
+    dist_labels = [h.get_label() for h in dist_handles]
+
+    # Place the two legends side by side below the axes
+    leg1 = ax.legend(
+        prob_handles, prob_labels,
+        loc='lower left',
+        bbox_to_anchor=(0.08, -0.19),  # left legend, shifted right
+        ncol=3, columnspacing=1.2,  # 3 on top, 2 on bottom
+        title=r"$\bf{Genesis\ Probabilities}$",
+        fontsize=12, title_fontsize=14,
+        frameon=True, framealpha=0.97, facecolor='white', edgecolor='none',
+        borderpad=1.0, labelspacing=0.5, handlelength=1.5, handletextpad=0.7, borderaxespad=0.7
+    )
+    leg1.set_zorder(1000)
+    for text in leg1.get_texts():
+        text.set_fontsize(12)
+    if leg1.get_title() is not None:
+        leg1.get_title().set_fontsize(14)
+
+    leg2 = ax.legend(
+        dist_handles, dist_labels,
+        loc='lower left',
+        bbox_to_anchor=(0.45, -0.19),  # right legend, beside the first
+        ncol=4, columnspacing=1.2,  # 5 on top, 4 on bottom
+        title=r"$\bf{Disturbance\ Types}$",
+        fontsize=12, title_fontsize=13,
+        frameon=True, framealpha=0.97, facecolor='white', edgecolor='none',
+        borderpad=1.0, labelspacing=0.5, handlelength=1.5, handletextpad=0.7, borderaxespad=0.7
+    )
+    leg2.set_zorder(1000)
+    for text in leg2.get_texts():
+        text.set_fontsize(12)
+    if leg2.get_title() is not None:
+        leg2.get_title().set_fontsize(14)
+
+    # Add both legends to the axes
+    ax.add_artist(leg1)
+    ax.add_artist(leg2)
 
 def draw_timestamp(ax, basin, issue_dt):
     from zoneinfo import ZoneInfo
@@ -447,5 +559,11 @@ def draw_timestamp(ax, basin, issue_dt):
             ha="right", va="bottom", fontsize=14, weight="bold",
             color="white", path_effects=[pe.Stroke(linewidth=3, foreground="black"), pe.Normal()],
             zorder=1000)
+
+    # Set the extent and aspect of the map
+    min_lon, max_lon = -130, -60  # Adjust these values as needed
+    min_lat, max_lat = 20, 50  # Adjust these values as needed
+    ax.set_extent([min_lon, max_lon, min_lat, max_lat], crs=ccrs.PlateCarree())
+    ax.set_aspect('auto')  # or 'equal' for a square aspect, but 'auto' is usually best for maps
 
 

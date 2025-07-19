@@ -5,6 +5,7 @@ import datetime
 from zoneinfo import ZoneInfo
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
+import matplotlib.patheffects as pe
 
 from two_data import get_two_gdfs, get_points, get_lines
 from config import COL, DEFAULT_EXTENT, FIGSIZE, DPI
@@ -48,19 +49,21 @@ def build_outlook(basin, label, prefix, outdir, timestamp, zip_path):
                         fontsize=16, weight="bold", color="black",
                         bbox=dict(boxstyle="round", facecolor="white", edgecolor="black", alpha=0.8),
                         zorder=100
-        )
+                )
+                draw_legend(ax, basin, issue_dt)  # Always show legend even if no areas
+                draw_timestamp(ax, basin, issue_dt)
         else:
         # Only draw these if TWO areas are present
                 draw_two_polygons(ax, two)
                 draw_points(ax, points)
                 label_two_combined(ax, two, points)
-                draw_arrows(ax, points, lines, two)
+                draw_arrows(ax, points, lines, two, basin)
                 draw_legend(ax, basin, issue_dt)
                 draw_timestamp(ax, basin, issue_dt)
 
         draw_timestamp(ax, basin, issue_dt)
 
-        fig.subplots_adjust(left=0.005, right=0.995, bottom=0.02, top=0.91)
+        fig.subplots_adjust(left=0.005, right=0.995, bottom=0.14, top=0.91)
 
         # # final lock to avoid resizing
         # ax.set_extent(DEFAULT_EXTENT[basin], crs=ccrs.PlateCarree())
@@ -100,21 +103,25 @@ def build_outlook(basin, label, prefix, outdir, timestamp, zip_path):
 
         # Format local time as 12-hour clock with AM/PM, no date
         stamp_local = now_local.strftime("%I:%M %p %Z").lstrip("0")  # e.g., "4:45 PM EDT"
-
+        issue_str = issue_dt.strftime("%d %b %Y %H:%M UTC")
+        
         # Footer left: runtime UTC + local time
-        ax.text(0, -0.01,
-                f"Generated {stamp_utc} / {stamp_local}",
-                transform=ax.transAxes,
-                ha="left", va="top",
-                fontsize=8, style="italic", weight="bold")
+        ax.text(
+            0.01, 0.01,
+            f"Generated {stamp_utc} / {stamp_local} \nData: NHC ({issue_str}) • Map: Huracanes Caribe",
+            transform=ax.transAxes,
+            ha="left", va="bottom",
+            fontsize=8, style="italic", weight="bold", zorder=1001,
+            path_effects=[pe.withStroke(linewidth=2, foreground="black")],color="white"
+        )
 
         # Footer right: GTWO issue time (from XML) in UTC
-        issue_str = issue_dt.strftime("%d %b %Y %H:%M UTC")
-        ax.text(1, -0.01,
-                f"Data: NHC ({issue_str}) • Map: Huracanes Caribe",
-                transform=ax.transAxes,
-                ha="right", va="top",
-                fontsize=8, style="italic", weight="bold")
+        
+        # ax.text(1, -0.16,
+        #         f"Data: NHC ({issue_str}) • Map: Huracanes Caribe",
+        #         transform=ax.transAxes,
+        #         ha="right", va="top",
+        #         fontsize=8, style="italic", weight="bold", zorder=1001)
 
         # 🔒 FINAL LOCK to prevent shrinking after plotting
         ax.set_autoscale_on(False)

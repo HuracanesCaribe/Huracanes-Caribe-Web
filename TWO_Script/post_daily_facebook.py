@@ -205,7 +205,7 @@ def main():
                 rtf_texts.get(basin, ""), basin, lang=lang
             )
             # Log the caption to file
-            log_path = BASE_DIR / "facebook_caption_log.txt"
+            log_path = BASE_DIR / "TWO_Script" / "facebook_caption_log.txt"
             with open(log_path, "a", encoding="utf-8") as log:
                 log.write(f"{datetime.now().isoformat()} | Page: {page_id} | Basin: {basin} | Lang: {lang}\n")
                 log.write(caption.strip() + "\n" + "-" * 60 + "\n----------------------------------------------------------")
