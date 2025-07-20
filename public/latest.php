@@ -1,48 +1,62 @@
 <?php
-$baseDir = __DIR__; // directorio actual: /output
-$dirs = glob($baseDir . '/*', GLOB_ONLYDIR);
+function get_latest_image($basin_prefix, $local_base, $base_url) {
+    // Buscar carpetas tipo fecha
+    $folders = array_filter(glob($local_base . '/*'), function ($dir) {
+        return is_dir($dir) && preg_match('/\d{4}-\d{2}-\d{2}/', basename($dir));
+    });
 
-// Buscar la carpeta más reciente (por nombre)
-usort($dirs, function ($a, $b) {
-    return strcmp($b, $a); // de mayor a menor
-});
+    if (empty($folders)) {
+        return ["error" => "No se encontraron carpetas."];
+    }
 
-$latestDir = $dirs[0] ?? null;
-if (!$latestDir) {
-    echo "Error: No hay carpetas.";
-    exit;
+    // Ordenar de más reciente a más antigua
+    usort($folders, function ($a, $b) {
+        return strcmp($b, $a);
+    });
+
+    foreach ($folders as $folder) {
+        $basename = basename($folder);
+        $pattern = $folder . '/' . $basin_prefix . '_*.png';
+        $images = glob($pattern);
+
+        if (!empty($images)) {
+            // Ordenar por fecha de modificación
+            usort($images, function ($a, $b) {
+                return filemtime($b) - filemtime($a);
+            });
+
+            $latest_image = basename($images[0]);
+            $url = $base_url . '/' . $basename . '/' . $latest_image;
+
+            return [
+                "url" => $url,
+                "file" => $latest_image,
+                "date" => $basename
+            ];
+        }
+    }
+
+    return ["error" => "No se encontraron imágenes para $basin_prefix."];
 }
 
-// Buscar la imagen más reciente dentro de esa carpeta
-$images = glob($latestDir . '/*.png');
-usort($images, function ($a, $b) {
-    return filemtime($b) - filemtime($a); // más reciente primero
-});
+// Ruta local absoluta
+$local_base = __DIR__ . '/../TWO_Script/output';
+$base_url = 'http://150.230.24.24/output';
 
-$latestImage = $images[0] ?? null;
-if (!$latestImage) {
-    echo "Error: No hay imágenes.";
-    exit;
+$atlantic = get_latest_image('atlantic', $local_base, $base_url);
+$eastpac = get_latest_image('eastpac', $local_base, $base_url);
+
+// Mostrar resultados
+function render_image($title, $data) {
+    if (isset($data['error'])) {
+        echo "<h3>$title</h3><p style='color:red;'>{$data['error']}</p>";
+    } else {
+        echo "<h3 style='font-family:sans-serif;'>$title</h3>";
+        echo "<img src='{$data['url']}' style='max-width:100%; border-radius:10px;' />";
+        echo "<p style='font-family:sans-serif; font-size:14px;'>{$data['date']} / {$data['file']}</p>";
+    }
 }
 
-// Ruta pública relativa
-$publicPath = str_replace($_SERVER['DOCUMENT_ROOT'], '', $latestImage);
-$fullUrl = "http://" . $_SERVER['HTTP_HOST'] . $publicPath;
+render_image('🌊 Imagen más reciente del Atlántico', $atlantic);
+render_image('🌋 Imagen más reciente del Pacífico Este', $eastpac);
 ?>
-
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <title>Última Imagen del Sistema</title>
-  <style>
-    body { font-family: sans-serif; text-align: center; padding: 20px; background: #f6f6f6; }
-    img { max-width: 90%; height: auto; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.2); }
-  </style>
-</head>
-<body>
-  <h2>🌀 Última Imagen Generada</h2>
-  <p><?= basename($latestImage) ?></p>
-  <img src="<?= htmlspecialchars($fullUrl) ?>" alt="Última Imagen">
-</body>
-</html>
